@@ -1,0 +1,19 @@
+{
+  "name": "sketch-viewer",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "babel-core": "^6.24.1",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "bplist-parser": "^0.1.1",
+    "dropdown-interface": "^0.1.1",
+    "electron": "^1.8.3",
+    "electron-context-menu": "^0.9.1",
+    "jszip": "^3.1.5",
+    "less": "^3.0.1",
+    "preact": "^8.2.5"
+  }
+}

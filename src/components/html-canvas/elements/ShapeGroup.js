@@ -147,7 +147,11 @@ export default function ElementShapeGroup ({layer}) {
                     </mask>
                 );
 
-                prev.attributes.mask = `url(#${maskId})`;
+                // Fixes multiple masks with nothing to mask
+                if (prev) {
+                    prev.attributes.mask = `url(#${maskId})`;
+                }
+                
             }
 
             masks[masks.length - 1].children.push(
@@ -212,9 +216,12 @@ export default function ElementShapeGroup ({layer}) {
                 }
             }
 
-            let blendNumber = fill.contextSettings? fill.contextSettings.blendMode : 0;
-            output.blend = BlendingMode[blendNumber];
-            fillOutput.push(output);
+            if (output) {
+                let blendNumber = fill.contextSettings? fill.contextSettings.blendMode : 0;
+                output.blend = BlendingMode[blendNumber];
+                fillOutput.push(output);
+            }
+            
         })
 
     }

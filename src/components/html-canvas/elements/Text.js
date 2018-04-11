@@ -75,9 +75,11 @@ function getColor (layer) {
             blue: parts[2],
             alpha: parts[3] || 1
         });
+    } else if (layer.style.textStyle.encodedAttributes.MSAttributedStringColorAttribute) {
+        color = getDOMColor(layer.style.textStyle.encodedAttributes.MSAttributedStringColorAttribute);
     } else {
         color = getDOMColor(layer.style.textStyle.encodedAttributes.MSAttributedStringColorDictionaryAttribute);
-    }
+    } 
 
     if (layer.style.fills && layer.style.fills[0].isEnabled) {
         color = getDOMColor(layer.style.fills[0].color);
@@ -88,26 +90,32 @@ function getColor (layer) {
 
 function getAlignmentAndSpacing (layer) {
     let attrs = layer.style.textStyle.encodedAttributes;
-    let list = parseBplist(attrs.paragraphStyle || attrs.NSParagraphStyle);
-    let { NSAlignment, NSParagraphSpacing, NSMinLineHeight} = list[0].$objects[1];
+    let paragraphStyle = attrs.paragraphStyle || attrs.NSParagraphStyle
 
-    let lineHeight;
-    if (NSMinLineHeight !== undefined) {
-        lineHeight = NSMinLineHeight + 'px';
-    } else if (NSParagraphSpacing !== undefined) {
-        lineHeight = (1 + NSParagraphSpacing) + 'em';
-    } else {
-        lineHeight = '1.5em';
+    // Might not exist sometimes
+    if (paragraphStyle) {
+        let list = parseBplist(paragraphStyle);
+        let { NSAlignment, NSParagraphSpacing, NSMinLineHeight} = list[0].$objects[1];
+
+        let lineHeight;
+        if (NSMinLineHeight !== undefined) {
+            lineHeight = NSMinLineHeight + 'px';
+        } else if (NSParagraphSpacing !== undefined) {
+            lineHeight = (1 + NSParagraphSpacing) + 'em';
+        } else {
+            lineHeight = '1.5em';
+        }
+
+        let textAlign = alignments[NSAlignment] || 'left'
+        let letterSpacing = (layer.style.textStyle.encodedAttributes.kerning || '0') + 'px';
+
+        return {
+            letterSpacing,
+            textAlign,
+            lineHeight
+        };
     }
-
-    let textAlign = alignments[NSAlignment] || 'left'
-    let letterSpacing = (layer.style.textStyle.encodedAttributes.kerning || '0') + 'px';
-
-    return {
-        letterSpacing,
-        textAlign,
-        lineHeight
-    };
+    
 }
 
 /**

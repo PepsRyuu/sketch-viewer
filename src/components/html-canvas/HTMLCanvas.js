@@ -203,11 +203,22 @@ export default class HTMLCanvas extends Component {
                 onMouseDown={this.onMouseDown.bind(this)}
             >  
                 <div class="wrapper">
-                    {renderLayers.call(this, this.props.data.layers)}
+                    {(function () {
+                        try {
+                            return renderLayers.call(this, this.props.data.layers)
+                        } catch (e) {
+                            return (
+                                <div style="white-space: pre-wrap; font-family: monospace;">
+                                    {e.stack}
+                                </div>
+                            )
+                        }
+                    }.bind(this))()}
                 </div>
                 <canvas ref={e => this.canvas = e} width={width} height={height} style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none" />
             </div>
-        )
+        );
+        
     }
 
 }

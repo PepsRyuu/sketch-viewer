@@ -111,7 +111,12 @@ export default class App extends Component {
                     for (let i = 0; i < layers.length; i++) {
                         if (layers[i]._class === 'symbolInstance') {
                             let master = getSymbolMaster(layers[i].symbolID);
-                            layers[i].layers = JSON.parse(JSON.stringify(master.layers));
+
+                            // Ensure master is found. Might not exist.
+                            if (master) {
+                                layers[i].layers = JSON.parse(JSON.stringify(master.layers));
+                            }
+                            
                         }
 
                         if (layers[i].layers) {

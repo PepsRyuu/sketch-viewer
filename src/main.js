@@ -1,4 +1,5 @@
 import { render, h, Component } from 'preact';
+import Settings from './Settings';
 import App from './App';
 import './main.less';
 
@@ -11,4 +12,5 @@ Object.defineProperty(Component.prototype, 'nextBase', {
   set() { return; }
 });
 
+Settings.init();
 render(<App />, document.getElementById('app'));

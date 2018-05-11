@@ -1,6 +1,7 @@
 import { Component } from 'preact';
 import './InspectPanel.less'
 import EventBus from '../../EventBus';
+import VariableMap from '../variable-map/VariableMap';
 
 export default class InspectPanel extends Component {
         
@@ -35,6 +36,11 @@ export default class InspectPanel extends Component {
                         value: value
                     };
 
+                    let variable = VariableMap.GetVariableMapping(key, value);
+                    if (variable) {
+                        property.variable = <p>{'Variable: ' + variable}</p>
+                    }
+
                     if (value.toString().indexOf('linear-gradient') === 0 || value.toString().indexOf('rgba(') === 0) {
                         property.extra = <div style={`height: 10px; background: ${value};`}/>
                     }
@@ -54,6 +60,7 @@ export default class InspectPanel extends Component {
                     <div class="InspectPanel-property">
                         <h3>{property.title}</h3>
                         <p>{property.value}</p>
+                        {property.variable || null}
                         {property.extra || null}
                     </div>
                 ))}

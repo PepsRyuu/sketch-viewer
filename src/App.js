@@ -2,6 +2,7 @@ import { Component } from 'preact';
 import InspectPanel from './components/inspect-panel/InspectPanel';
 import HTMLCanvas from './components/html-canvas/HTMLCanvas';
 import SelectBox from './components/select-box/SelectBox';
+import VariableMap from './components/variable-map/VariableMap';
 import JSZip from 'jszip';
 import './App.less';
 
@@ -240,6 +241,8 @@ export default class App extends Component {
         shell.openItem(path.resolve(process.cwd(), filepath));        
     }
 
+ 
+
     /**
      * Render.
      *
@@ -273,6 +276,7 @@ export default class App extends Component {
                                 onChange={this.onArtboardChange.bind(this)}
                             />
                             <button onClick={this.openJSON.bind(this)}>Open JSON</button>
+                            <VariableMap />
                         </div>
                     : null}
                 </div>

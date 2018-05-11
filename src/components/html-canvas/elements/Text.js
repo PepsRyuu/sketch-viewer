@@ -35,10 +35,19 @@ const alignments = {
 };
 
 function getFontStyle (layer) {
-    let list = parseBplist(layer.style.textStyle.encodedAttributes.MSAttributedStringFontAttribute);
-    let parts = list[0].$objects[6].split('-');
-    let fontSize = list[0].$objects[5];
+    let encodedFont = layer.style.textStyle.encodedAttributes.MSAttributedStringFontAttribute;
+    let fullFontName, fontSize;
 
+    if (encodedFont._archive) {
+        let list = parseBplist(encodedFont);
+        fullFontName = list[0].$objects[6];
+        fontSize = list[0].$objects[5];
+    } else if (encodedFont._class === 'fontDescriptor') {
+        fullFontName = encodedFont.attributes.name;
+        fontSize = encodedFont.attributes.size;
+    }
+
+    let parts = fullFontName.split('-');
     let fontFamily, fontWeight;
     if (parts.length === 2) {
         fontFamily = parts[0];
@@ -52,8 +61,15 @@ function getFontStyle (layer) {
 }
 
 function getStringValue (layer) {
-    let list = parseBplist(layer.attributedString.archivedAttributedString);
-    let stringValue = list[0].$objects[2].replace(/\u2028/g, '\n');
+    let stringValue;
+    if (layer.attributedString.archivedAttributedString) {
+        let list = parseBplist(layer.attributedString.archivedAttributedString);
+        stringValue = list[0].$objects[2];
+    } else if (layer.attributedString._class === 'attributedString') {
+        stringValue = layer.attributedString.string;
+    }
+
+    stringValue = stringValue.replace(/\u2028/g, '\n');
 
     // transform if needed
     if (layer.style.textStyle.encodedAttributes.MSAttributedStringTextTransformAttribute === 1) {
@@ -94,19 +110,36 @@ function getAlignmentAndSpacing (layer) {
 
     // Might not exist sometimes
     if (paragraphStyle) {
-        let list = parseBplist(paragraphStyle);
-        let { NSAlignment, NSParagraphSpacing, NSMinLineHeight} = list[0].$objects[1];
+        let alignment, lineHeight;
 
-        let lineHeight;
-        if (NSMinLineHeight !== undefined) {
-            lineHeight = NSMinLineHeight + 'px';
-        } else if (NSParagraphSpacing !== undefined) {
-            lineHeight = (1 + NSParagraphSpacing) + 'em';
-        } else {
-            lineHeight = '1.5em';
+        if (paragraphStyle._archive) {
+            let list = parseBplist(paragraphStyle);
+            let { NSAlignment, NSParagraphSpacing, NSMinLineHeight} = list[0].$objects[1];
+
+            let lineHeight;
+            if (NSMinLineHeight !== undefined) {
+                lineHeight = NSMinLineHeight + 'px';
+            } else if (NSParagraphSpacing !== undefined) {
+                lineHeight = (1 + NSParagraphSpacing) + 'em';
+            }
+
+            alignment = NSAlignment;
+        } else if (paragraphStyle._class === 'paragraphStyle') {
+            alignment = paragraphStyle.alignment;
+
+            if (paragraphStyle.minimumLineHeight) {
+                lineHeight = paragraphStyle.minimumLineHeight + 'px';
+            } else if (paragraphStyle.paragraphSpacing) {
+                lineHeight = (1 + paragraphStyle.paragraphSpacing) + 'em';
+            }
         }
 
-        let textAlign = alignments[NSAlignment] || 'left'
+        if (lineHeight === undefined) {
+            // TODO: Not entirely sure if this is the correct default.
+            lineHeight = '1.5';
+        }
+        
+        let textAlign = alignments[alignment] || 'left'
         let letterSpacing = (layer.style.textStyle.encodedAttributes.kerning || '0') + 'px';
 
         return {

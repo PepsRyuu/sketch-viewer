@@ -49,6 +49,7 @@ export default class App extends Component {
      */
     onFileLoad (e) {
         let reader = new FileReader();
+        let file = e.target.files[0];
 
         reader.onload = async (e) => {
             let zip = await JSZip.loadAsync(e.target.result);
@@ -56,6 +57,7 @@ export default class App extends Component {
             let pages = [];
             let images = [];
             let metadata = JSON.parse(await zip.files['meta.json'].async('text'));
+            let docdata = JSON.parse(await zip.files['document.json'].async('text'));
 
             // Parse pages and artboards
             for (let key in metadata.pagesAndArtboards) {
@@ -86,27 +88,67 @@ export default class App extends Component {
                 }
             }
 
+            // Parse Library Symbols
+            let loadedForeignSymbols = {};
+            let loadedSourceLibraries = {};
+
+            for (let i = 0; i < docdata.foreignSymbols.length; i++) {
+                let foreignSymbol = docdata.foreignSymbols[i];
+                let libpath = path.resolve(path.dirname(file.path), `${foreignSymbol.sourceLibraryName}.sketch`);
+                
+                if (!loadedSourceLibraries[libpath]) {
+                    let libzip = await JSZip.loadAsync(fs.readFileSync(libpath));
+                    let output = {};
+
+                    for (let filename in libzip.files) {
+                        if (filename.indexOf('pages/') === 0) {
+                            output[filename] = JSON.parse(await libzip.files[filename].async('text'));
+                        }
+                    }
+
+                    loadedSourceLibraries[libpath] = output;
+                }
+    
+                let sourcelib = loadedSourceLibraries[libpath];
+
+                for (let page in sourcelib) {
+                    let symbolID = foreignSymbol.originalMaster.symbolID;
+                    let hr = getSymbolMasterImpl(sourcelib[page].layers, symbolID);
+                    if (hr) {
+                        loadedForeignSymbols[foreignSymbol.symbolMaster.symbolID] = hr;
+                        break;
+                    }
+                }
+            }
+
+
+            function getSymbolMasterImpl (layers, id) {
+                for (let i = 0; i < layers.length; i++) {
+                    if (layers[i]._class === 'symbolMaster' && layers[i].symbolID === id) {
+                        return layers[i];
+                    }
+                    if (layers[i].layers) {
+                        getSymbolMasterImpl(layers[i].layers);
+                    }
+                }
+            }
+
             function getSymbolMaster (id) {
-                let impl = layers => {
-                    for (let i = 0; i < layers.length; i++) {
-                        if (layers[i]._class === 'symbolMaster' && layers[i].symbolID === id) {
-                            return layers[i];
-                        }
-                        if (layers[i].layers) {
-                            impl(layers[i].layers);
-                        }
+                for (let key in loadedForeignSymbols) {
+                    if (key === id) {
+                        return loadedForeignSymbols[key];
                     }
                 }
 
                 for (let i = 0; i < pages.length; i++) {
-                    let hr = impl(pages[i].data.layers);
+                    let hr = getSymbolMasterImpl(pages[i].data.layers, id);
                     if (hr) {
                         return hr;
                     }
                 }
             }
 
-            function resolveSymbols (page) {
+            function resolveSymbols (layers) {
                 let impl = layers => {
                     for (let i = 0; i < layers.length; i++) {
                         if (layers[i]._class === 'symbolInstance') {
@@ -125,13 +167,13 @@ export default class App extends Component {
                     }
                 }
 
-                impl(page.data.layers);
+                impl(layers);
 
             }
 
             // Go through symbols and duplicate them.
             // TODO: Need to support symbol overrides.
-            pages.forEach(resolveSymbols);
+            pages.forEach(page => resolveSymbols(page.data.layers));
 
             // Make it accessible for Bitmap class.
             window.__page__images = images;
@@ -150,7 +192,7 @@ export default class App extends Component {
             loading: true
         });
 
-        reader.readAsArrayBuffer(e.target.files[0]);
+        reader.readAsArrayBuffer(file);
     }
 
     /**

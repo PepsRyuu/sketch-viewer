@@ -10,7 +10,7 @@ function generateShapePath (layer) {
         return (parts[0] * _w + _x) + ' ' + (parts[1] * _h + _y);
     }
 
-    let points = layer.path.points;
+    let points = layer.points || layer.path.points;
     let start = parsePoint(points[0].point);
     let d = `M ${start} `;
 
@@ -30,7 +30,7 @@ function generateShapePath (layer) {
 
     }
 
-    if (layer.isClosed || layer.path.isClosed) {
+    if (layer.isClosed || (layer.path && layer.path.isClosed)) {
         let p = parsePoint(points[0].point);
 
         if (points[0].hasCurveTo) {
@@ -51,8 +51,9 @@ function generateShapePath (layer) {
 
 function generateRectangle (layer) {
     let {x, y, width, height} = layer.frame;
+    let points = layer.points || layer.path.points;
 
-    let corners = layer.path.points.map(p => {
+    let corners = points.map(p => {
         return Math.min(Math.min(width, height) / 2, p.cornerRadius);
     });
 
@@ -244,7 +245,7 @@ export default function ElementShapeGroup ({layer}) {
         fills: fillOutput.map(output => output.css),
         border: props.stroke,
         borderwidth: props['stroke-width'],
-        borderRadius: layer.layers[0]._class === 'rectangle' || layer.layers[0]._class === 'oval'? layer.layers[0].path.points.map(p => p.cornerRadius).join(', ') : undefined
+        borderRadius: layer.layers[0]._class === 'rectangle' || layer.layers[0]._class === 'oval'? (layer.layers[0].points || layer.layers[0].path.points).map(p => p.cornerRadius).join(', ') : undefined
     };
 
     return (

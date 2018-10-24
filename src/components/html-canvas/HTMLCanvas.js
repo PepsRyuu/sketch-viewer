@@ -144,7 +144,7 @@ export default class HTMLCanvas extends Component {
     }
 
     render () {
-        function renderLayers (layers, parent) {
+        function renderLayers (layers, parent, parentEl) {
             return layers.map(layer => {
                 let el;
 
@@ -168,7 +168,7 @@ export default class HTMLCanvas extends Component {
 
                 applyOpacity(el, layer);
                 applyTransforms(el, layer);
-                applyClipMasks(el, layer);
+                applyClipMasks(el, layer, parentEl);
                 applyShadows(el, layer);
 
                 el.attributes.class = layer._class;
@@ -185,7 +185,7 @@ export default class HTMLCanvas extends Component {
 
                 if (el && layer._class !== 'shapeGroup' && layer.layers) {
                     el.children = el.children || [];
-                    el.children = el.children.concat(renderLayers.call(this, layer.layers, layer));
+                    el.children = el.children.concat(renderLayers.call(this, layer.layers, layer, el));
                 }
 
                 return el;

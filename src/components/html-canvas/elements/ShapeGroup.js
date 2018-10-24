@@ -74,6 +74,8 @@ function generateRectangle (layer) {
 
 let gradientIndex = 0;
 let maskIndex = 0;
+let borderClipIndex = 0;
+
 
 const BlendingMode = {
     0: 'normal',
@@ -110,6 +112,7 @@ export default function ElementShapeGroup ({layer}) {
 
     let els = [];
     let masks = [];
+    let clips = [];
     let prevOp;
 
     // Calculate boolean operations for all paths.
@@ -117,11 +120,16 @@ export default function ElementShapeGroup ({layer}) {
         let d = childLayer._class === 'rectangle'? generateRectangle(childLayer) : generateShapePath(childLayer);
         let prev = els[els.length - 1];
         let op = childLayer.booleanOperation;
+        let transform = childLayer.rotation? 
+            `rotate(${childLayer.rotation}, ${childLayer.frame.x + childLayer.frame.width / 2}, ${childLayer.frame.y + childLayer.frame.height / 2})` 
+            : 
+            '';
+
 
         // Boolean Operation: None
         if (op === -1) {
             if (els.length === 0) {
-                els.push(<path d={d} />)
+                els.push(<path d={d} transform={transform}/>)
             } else {
                 prev.attributes.d = prev.attributes.d + d;
             }
@@ -129,7 +137,7 @@ export default function ElementShapeGroup ({layer}) {
 
         // Boolean Operation: Union
         if (op === 0) {
-            els.push(<path d={d} />);
+            els.push(<path d={d} transform={transform} />);
         }
 
         // Boolean Operation: Subtraction
@@ -160,6 +168,18 @@ export default function ElementShapeGroup ({layer}) {
             )
         }
 
+        if (layer.style && layer.style.borders && layer.style.borders.length > 0 && layer.style.borders[0].isEnabled && layer.style.borders[0].thickness > 0 && layer.style.borders[0].position === 1) {
+            let clipId = `__border_clip_index__${borderClipIndex++}`;
+            let clipEl = JSON.parse(JSON.stringify(els[els.length - 1]));
+
+            els[els.length - 1].attributes['clip-path'] = `url(#${clipId})`;
+            clips.push(
+                <clipPath id={clipId}>
+                    {clipEl}
+                </clipPath>
+            );
+        }
+
         prevOp = op;
     });
 
@@ -167,6 +187,7 @@ export default function ElementShapeGroup ({layer}) {
     let fills = layer.style.fills? layer.style.fills.filter(f => f.isEnabled) : [];
     let borders = layer.style.borders? layer.style.borders.filter(b => b.isEnabled) : [];
     let fillOutput = [];
+    let borderOptions = layer.style.borderOptions || {};
 
     // Get the gradients and solid colors for each fill.
     if (fills && fills.length > 0) {
@@ -239,6 +260,15 @@ export default function ElementShapeGroup ({layer}) {
     if (borders && borders.length > 0) {
         props.stroke = getDOMColor(borders[0].color);
         props['stroke-width'] = borders[0].thickness;
+
+        if (borderOptions.dashPattern && borderOptions.dashPattern.length > 0) {
+            props['stroke-dasharray'] = borderOptions.dashPattern[0];
+        }
+
+        // Inside stroke, double and add clip mask
+        if (borders[0].position === 1) {
+            props['stroke-width'] = borders[0].thickness * 2;
+        }
     }
 
     layer.__resolved.shapegroup = {
@@ -253,6 +283,7 @@ export default function ElementShapeGroup ({layer}) {
             <defs>
                 {fillOutput.filter(f => f.prepend).map(f => f.prepend)}
                 {masks}
+                {clips}
             </defs>
             {els.map(el => {
                 return fillOutput.map(f => {

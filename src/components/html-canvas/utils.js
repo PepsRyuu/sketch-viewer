@@ -101,7 +101,7 @@ export function applyTransforms (el, layer) {
  * @param {Object} layer
  */
 let clipIndex = 0;
-export function applyClipMasks (el, layer) {
+export function applyClipMasks (el, layer, parentEl) {
     if (layer.clippingMask) {
         let clipId = `__clip__${clipIndex++}`;
         let previous = layer.parent.layers[layer.parent.layers.findIndex(l => l === layer) - 1];
@@ -118,7 +118,10 @@ export function applyClipMasks (el, layer) {
                 </clipPath>
             );
         } 
+    } else if (layer.hasClippingMask) {
+        setStyle(parentEl, 'overflow', 'hidden');
     }
+
 }
 
 /**

@@ -49,11 +49,12 @@ function getFontStyle (layer) {
 
     let parts = fullFontName.split('-');
     let fontFamily, fontWeight;
+
+    fontFamily = parts[0] + ', ' + parts[0].replace(/([A-Z])/g, ' $1').trim();
+
     if (parts.length === 2) {
-        fontFamily = parts[0];
         fontWeight = weights[parts[1].toLowerCase()];
     } else {
-        fontFamily = parts[0];
         fontWeight = '300'; // TODO: Is this the correct default?
     }
 

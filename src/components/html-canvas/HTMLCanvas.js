@@ -12,6 +12,9 @@ import { applyTransforms, applyClipMasks, applyOpacity, applyShadows } from './u
 const ELEMENTS = {
     'artboard': ElementArtboard,
     'shapeGroup': ElementShapeGroup,
+    'rectangle': ElementShapeGroup,
+    'oval': ElementShapeGroup,
+    'shapePath': ElementShapeGroup,
     'group': ElementGroup,
     'text': ElementText,
     'bitmap': ElementBitmap,

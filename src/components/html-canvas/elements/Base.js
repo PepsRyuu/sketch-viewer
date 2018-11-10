@@ -1,96 +1,3 @@
-import bplist from 'bplist-parser';
-
-export function withProperty (layer, path, callback) {
-    let parts = path.split('.');
-    let partIndex = 0;
-    let parent = layer;
-
-    let value = parent[parts[partIndex]];
-    while (partIndex < parts.length) {
-        let value = parent[parts[partIndex]];
-        if (value !== undefined) {
-            if (partIndex === parts.length - 1) {
-                callback(value);
-                break;
-            } else {
-                partIndex++;
-                parent = value;
-            }
-        } else {
-            break;
-        }
-    } 
-}
-
-export function setAttribute(el, attr, value) {
-    if (!el.attributes) {
-        el.attributes = {};
-    }
-
-    el.attributes[attr] = value;
-}
-
-export function parseBplist (prop) {
-    let buffer = Buffer.from(prop._archive, 'base64');
-    let result = bplist.parseBuffer(buffer);
-    return result;
-}
-
-
-/**
- * Set the style on the JSX element.
- *
- * @method setStyle 
- * @param {VNode} el
- * @param {String} name
- * @param {Any} value
- */
-export function setStyle(el, name, value) {
-    if (!el.attributes.style) {
-        el.attributes.style = {};
-    }
-
-    el.attributes.style[name] = value;
-}
-
-/**
- * Get the style, else return undefined
- *
- * @method getStyle
- * @param {VNode} el,
- * @param {String} name
- * @return {Any}
- */
-export function getStyle (el, name) {
-    if (!el.attributes.style) {
-        return undefined;
-    } 
-
-    return el.attributes.style[name];
-}
-
-/**
- * Convert Sketch RGBA structure to DOM color string.
- *
- * @method getDOMColor
- * @param {Object} color
- * @return {String}
- */
-export function getDOMColor (color) {
-    return `rgba(${Math.floor(255 * color.red)}, ${Math.floor(255 * color.green)}, ${Math.floor(255 * color.blue)}, ${color.alpha})`;
-}
-
-/**
- * Takes Sketch number set format and returns them parsed as floats.
- *
- * @method parseNumberSet
- * @param {String} input
- * @return {Array<Float>}
- */
-export function parseNumberSet (input) {
-    return input.replace(/\{|\}/g, '').split(', ').map(parseFloat);
-}
-
 /**
  * Apply translate and rotations.
  *
@@ -98,7 +5,7 @@ export function parseNumberSet (input) {
  * @param {VNode} el
  * @param {Object} layer
  */
-export function applyTransforms (el, layer) {
+function applyTransforms (el, layer) {
     if (!getStyle(el, 'transform')) {
         setStyle(el, 'transform', '');
     }
@@ -255,3 +162,26 @@ export function applyShadows (el, layer) {
     }
 }
 
+module.exports = class BaseElement extends Component {
+    render () {
+        let el = this.renderElement(props.layer) || <div />;
+
+        setAttribute(el, 'class', layer._class);
+        setAttribute(el, 'data-id', layer.do_objectID);
+
+        applyOpacity(el, layer);
+        applyTransforms(el, layer);
+        applyClipMasks(el, layer, parentEl);
+        applyShadows(el, layer);
+
+        return el;
+    }
+}
+
+function setAttribute(el, attr, value) {
+    if (!el.attributes) {
+        el.attributes = {};
+    }
+
+    el.attributes[attr] = value;
+}

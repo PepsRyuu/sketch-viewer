@@ -1,11 +1,16 @@
 import { getDOMColor, parseNumberSet } from '../utils';
+import { BlendingMode } from '../constants';
+
+let gradientIndex = 0;
+let maskIndex = 0;
+let borderClipIndex = 0;
 
 function generateShapePath (layer, isShapeGroup) {
     function parsePoint (point) {
         let _w = layer.frame.width;
         let _h = layer.frame.height;
-        let _x = isShapeGroup? layer.frame.x : 0;
-        let _y = isShapeGroup? layer.frame.y: 0;
+        let _x = 0;
+        let _y = 0;
         let parts = point.replace(/\{|\}/g, '').split(', ').map(parseFloat);
         return (parts[0] * _w + _x) + ' ' + (parts[1] * _h + _y);
     }
@@ -50,13 +55,8 @@ function generateShapePath (layer, isShapeGroup) {
 }
 
 function generateRectangle (layer, isShapeGroup) {
-    let {x, y, width, height} = layer.frame;
-
-    if (!isShapeGroup) {
-        x = 0;
-        y = 0;
-    }
-
+    let { width, height } = layer.frame;
+    let x = 0, y = 0;
     let points = layer.points || layer.path.points;
 
     let corners = points.map(p => {
@@ -78,29 +78,6 @@ function generateRectangle (layer, isShapeGroup) {
            
 }
 
-let gradientIndex = 0;
-let maskIndex = 0;
-let borderClipIndex = 0;
-
-
-const BlendingMode = {
-    0: 'normal',
-    1: 'darken',
-    2: 'multiply',
-    3: 'color-burn',
-    4: 'lighten',
-    5: 'screen',
-    6: 'color-dodge',
-    7: 'overlay',
-    8: 'soft-light',
-    9: 'hard-light',
-    10: 'difference',
-    11: 'exclusion',
-    12: 'hue',
-    13: 'saturation',
-    14: 'color',
-    15: 'luminosity'
-};
 
 /**
  * SVG shape group class.
@@ -116,16 +93,13 @@ export default function ElementShapeGroup ({layer}) {
         style: {}
     };
 
-    let els = [];
-    let masks = [];
     let clips = [];
-    let prevOp;
-    let childLayers = layer._class === 'shapeGroup'? layer.layers : [ layer ];
-    let isShapeGroup = layer._class === 'shapeGroup';
+
+    let d = childLayer._class === 'rectangle'? generateRectangle(childLayer, isShapeGroup) : generateShapePath(childLayer, isShapeGroup);
+
 
     // Calculate boolean operations for all paths.
     childLayers.forEach((childLayer, index) => {
-        let d = childLayer._class === 'rectangle'? generateRectangle(childLayer, isShapeGroup) : generateShapePath(childLayer, isShapeGroup);
         let prev = els[els.length - 1];
         let op = childLayer.booleanOperation;
         let transform = childLayer.rotation? 
@@ -295,7 +269,6 @@ export default function ElementShapeGroup ({layer}) {
                 {clips}
             </defs>
             {els.map(el => {
-                // http://jsfiddle.net/217bdpf5/1/
                 return fillOutput.map(f => {
                     el = JSON.parse(JSON.stringify(el));
                     el.attributes.fill = f.fill;

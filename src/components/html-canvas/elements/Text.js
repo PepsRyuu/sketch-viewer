@@ -1,106 +1,85 @@
-import { getDOMColor } from '../utils';
-import bplist from 'bplist-parser';
-
-function parseBplist (prop) {
-    let buffer = Buffer.from(prop._archive, 'base64');
-    let result = bplist.parseBuffer(buffer);
-    return result;
-}
-
-// Weights have to be strings for them 
-// to be applied as styles.
-const weights = {
-    'thin': '100',
-    'hairline': '100',
-    'extralight': '200',
-    'ultralight': '200',
-    'light': '300',
-    'normal': '400',
-    'regular': '400',
-    'medium': '500',
-    'semibold': '600',
-    'demibold': '600',
-    'bold': '700',
-    'extrabold': '800',
-    'ultrabold': '800',
-    'black': '900',
-    'heavy': '900'
-};
-
-const alignments = {
-  1: 'right',
-  2: 'center',
-  3: 'justify',
-  4: 'left'
-};
+import { getDOMColor, parseBplist, withProperty } from '../utils';
+import { TextWeights, TextAlignments } from '../constants';
 
 function getFontStyle (layer) {
-    let encodedFont = layer.style.textStyle.encodedAttributes.MSAttributedStringFontAttribute;
-    let fullFontName, fontSize;
+    let font, size;
 
-    if (encodedFont._archive) {
-        let list = parseBplist(encodedFont);
-        fullFontName = list[0].$objects[6];
-        fontSize = list[0].$objects[5];
-    } else if (encodedFont._class === 'fontDescriptor') {
-        fullFontName = encodedFont.attributes.name;
-        fontSize = encodedFont.attributes.size;
-    }
+    withProperty(layer, 'style.textStyle.encodedAttributes.MSAttributedStringFontAttribute', encodedFont => {
+        if (encodedFont._archive) {
+            let obj = parseBplist(encodedFont);
+            font = obj[0].$objects[6];
+            size = obj[0].$objects[5];
+        }
 
-    let parts = fullFontName.split('-');
-    let fontFamily, fontWeight;
+        if (encodedFont._class === 'fontDescriptor') {
+            font = encodedFont.attributes.name;
+            size = encodedFont.attributes.size;
+        }   
+    });
 
-    fontFamily = parts[0] + ', ' + parts[0].replace(/([A-Z])/g, ' $1').trim();
+    let parts = font.split('-');
+    let family = parts[0] + ', ' + parts[0].replace(/([A-Z])/g, ' $1').trim();
+    let weight = parts.length === 2? TextWeights[parts[1].toLowerCase()] : '300';
 
-    if (parts.length === 2) {
-        fontWeight = weights[parts[1].toLowerCase()];
-    } else {
-        fontWeight = '300'; // TODO: Is this the correct default?
-    }
-
-    return { fontSize, fontWeight, fontFamily };
+    return {
+        fontSize: size,
+        fontWeight: weight,
+        fontFamily: family
+    };
 }
 
 function getStringValue (layer) {
     let stringValue;
-    if (layer.attributedString.archivedAttributedString) {
-        let list = parseBplist(layer.attributedString.archivedAttributedString);
-        stringValue = list[0].$objects[2];
-    } else if (layer.attributedString._class === 'attributedString') {
-        stringValue = layer.attributedString.string;
-    }
+
+    withProperty(layer, 'attributedString', attributedString => {
+        if (attributedString.archivedAttributedString) {
+            stringValue = parseBplist(attributedString.archivedAttributedString)[0].$objects[2];
+        }
+           
+        if (attributedString._class === 'attributedString') {
+            stringValue = attributedString.string;
+        }
+    });
 
     stringValue = stringValue.replace(/\u2028/g, '\n');
 
-    // transform if needed
-    if (layer.style.textStyle.encodedAttributes.MSAttributedStringTextTransformAttribute === 1) {
-        stringValue = stringValue.toUpperCase();
-    }
+    withProperty(layer, 'style.textStyle.encodedAttributes.MSAttributedStringTextTransformAttribute', (value) => {
+        if (value === 1) {
+            stringValue = stringValue.toUpperCase();
+        }
+    });
 
     return { stringValue };
-
 }
 
 function getColor (layer) {
     let color;
-    if (layer.style.textStyle.encodedAttributes.NSColor) {
-        let buffer = parseBplist(layer.style.textStyle.encodedAttributes.NSColor)[0].$objects[1].NSRGB.toString('utf8');
-        let parts = buffer.split(' ').map(parseFloat);
-        color = getDOMColor({
-            red: parts[0],
-            green: parts[1],
-            blue: parts[2],
-            alpha: parts[3] || 1
-        });
-    } else if (layer.style.textStyle.encodedAttributes.MSAttributedStringColorAttribute) {
-        color = getDOMColor(layer.style.textStyle.encodedAttributes.MSAttributedStringColorAttribute);
-    } else {
-        color = getDOMColor(layer.style.textStyle.encodedAttributes.MSAttributedStringColorDictionaryAttribute);
-    } 
 
-    if (layer.style.fills && layer.style.fills[0].isEnabled) {
-        color = getDOMColor(layer.style.fills[0].color);
-    }
+    withProperty(layer, 'style.textStyle.encodedAttributes', encodedAttributes => {
+        withProperty(encodedAttributes, 'NSColor', raw => {
+            let parts = parseBplist(raw)[0].$objects[1].NSRGB.toString('utf8').split(' ').map(parseFloat);
+            color = getDOMColor({
+                red: parts[0],
+                green: parts[1],
+                blue: parts[2],
+                alpha: parts[3] || 1
+            });
+        });
+
+        withProperty(encodedAttributes, 'MSAttributedStringColorAttribute', raw => {
+            color = getDOMColor(raw);
+        });
+
+        withProperty(encodedAttributes, 'MSAttributedStringColorDictionaryAttribute', raw => {
+            color = getDOMColor(raw);
+        });
+    });
+
+    withProperty(layer, 'style.fills', fills => {
+        if (fills[0].isEnabled) {
+            color = getDOMColor(fills[0].color);
+        }
+    });
 
     return { color };
 }
@@ -140,7 +119,7 @@ function getAlignmentAndSpacing (layer) {
             lineHeight = '1.5';
         }
         
-        let textAlign = alignments[alignment] || 'left'
+        let textAlign = TextAlignments[alignment] || 'left'
         let letterSpacing = (layer.style.textStyle.encodedAttributes.kerning || '0') + 'px';
 
         return {

@@ -3,7 +3,8 @@ import EventBus from '../../EventBus';
 import CanvasNavigator from './CanvasNavigator';
 import ElementArtboard from './elements/Artboard';
 import ElementGroup from './elements/Group';
-import ElementShapeGroup from './elements/ShapeGroup';
+import ElementShapeGroup from './elements/ShapeGroup_redo';
+import ElementShape from './elements/Shape_redo';
 import ElementBitmap from './elements/Bitmap';
 import ElementText from './elements/Text';
 import ElementSymbolInstance from './elements/SymbolInstance';
@@ -12,9 +13,9 @@ import { applyTransforms, applyClipMasks, applyOpacity, applyShadows } from './u
 const ELEMENTS = {
     'artboard': ElementArtboard,
     'shapeGroup': ElementShapeGroup,
-    'rectangle': ElementShapeGroup,
-    'oval': ElementShapeGroup,
-    'shapePath': ElementShapeGroup,
+    'rectangle': ElementShape,
+    'oval': ElementShape,
+    'shapePath': ElementShape,
     'group': ElementGroup,
     'text': ElementText,
     'bitmap': ElementBitmap,
@@ -184,6 +185,10 @@ export default class HTMLCanvas extends Component {
                 el.attributes.onClick = (e) => {
                     e.stopPropagation();
                     EventBus.publish('inspect-element', {element: e.currentTarget, layer: layer});
+                }
+
+                if (layer.isLocked) {
+                    el.attributes.style['pointer-events'] = 'none';
                 }
 
                 if (el && layer._class !== 'shapeGroup' && layer.layers) {

@@ -3,13 +3,13 @@
         ["transform-es2015-modules-commonjs"],
         ["transform-react-jsx", {
             "pragma": "h"
-        }]
+        }],
+        ["transform-object-rest-spread"]
     ],
      "env": {
         "test": {
             "plugins": [
-                "istanbul",
-                "transform-object-rest-spread"
+                "istanbul"
             ]
         }
     }

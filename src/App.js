@@ -158,6 +158,33 @@ export default class App extends Component {
                             // Ensure master is found. Might not exist.
                             if (master) {
                                 layers[i].layers = JSON.parse(JSON.stringify(master.layers));
+
+                                if (layers[i].overrideValues) {
+                                    layers[i].overrideValues.forEach(override => {
+                                        let [objId, type] = override.overrideName.split('_');
+                                        if (type === 'stringValue') {
+                                            layers[i].layers.forEach(child => {
+                                                if (child.do_objectID === objId) {
+                                                    // TODO: Normalize string objects
+                                                    if (child.attributedString) {
+                                                        child.attributedString.string = override.value;
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+
+                                // Constrain frames.
+                                layers[i].layers.forEach(child => {
+                                    if (child.frame.width > layers[i].frame.width) {
+                                        child.frame.width = layers[i].frame.width;
+                                    }
+
+                                    if (child.frame.height > layers[i].frame.height) {
+                                        child.frame.height = layers[i].frame.height;
+                                    }
+                                })
                             }
                             
                         }

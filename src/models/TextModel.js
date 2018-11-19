@@ -1,5 +1,6 @@
 import { getDOMColor, parseBplist, withProperty } from '../utils';
 import { TextWeights, TextAlignments } from '../constants';
+import PListResolver from ',,/resolvers/PListResolver';
 
 function getFontStyle (layer) {
     let font, size;
@@ -127,46 +128,37 @@ function getAlignmentAndSpacing (layer) {
             textAlign,
             lineHeight
         };
-    }
-    
+    }   
 }
 
-/**
- * Sketch Text class.
- *
- * @method ElementText
- */
-export default function ElementText ({layer}) {
-    let resolved = Object.assign({}, 
-        getStringValue(layer),
-        getFontStyle(layer),
-        getColor(layer),
-        getAlignmentAndSpacing(layer)
-    );
+export default function TextModel (layer) {
+    // layer.attributedString
+        // 
 
-    layer.__resolved.text = resolved;
 
-    // TODO: Check for attributedString.attributes
-    // if that exists, use that, else use other properties
-    // Just do a simple map of the below for attributed
+    let hr;
+    if (hr = getProperty(layer, 'style.attributedString.')) {
+        attributedString = hr;
+    } else if (hr = getProperty(layer, 'style.textStyle.encodedAttributes')) {
+        attributedString = {
 
-    return (
-        <div 
-            style={{
-                'font-family': resolved.fontFamily +', sans-serif',
-                'font-size': resolved.fontSize,
-                'font-weight': resolved.fontWeight,
-                'color': resolved.color,
-                'white-space': 'pre-wrap',
-                'height': layer.frame.height,
-                'width': layer.frame.width,
-                'vertical-align': 'middle',
-                'line-height': resolved.lineHeight,
-                'text-align': resolved.textAlign,
-                'letter-spacing': resolved.letterSpacing,
-            }}
-        >   
-           {resolved.stringValue}
-        </div>
-    );
+        };
+    }
+
+
+    return {
+        'strings': [{
+            'value': 'hello world',
+            'style': {
+                'line-height': 0,
+                'font-size': 0,
+                'font-family': 0,
+                'font-weight': 0,
+                'color': '',
+                'text-align': '',
+                'letter-spacing': ''
+            }
+        }]
+        
+    };
 }

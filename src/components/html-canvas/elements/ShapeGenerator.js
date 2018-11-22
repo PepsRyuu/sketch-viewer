@@ -1,5 +1,21 @@
 import { getDOMColor, parseNumberSet } from '../utils';
 
+function calculatePathSegment(prev, curr) {
+    let p = parsePoint(curr.point);
+
+    if (curr.hasCurveTo) {
+        let c1 = parsePoint(prev.curveFrom);
+        let c2 = parsePoint(curr.curveTo);
+
+        return `C ${c1}, ${c2}, ${p} `;
+    } else if (curr.cornerRadius) {
+        // TODO: Arc calculation
+        // TODO: need to detect direction.
+    } else {
+        return `L ${p} `;
+    }
+}
+
 function generateShapePath (layer, offset) {
     function parsePoint (point) {
         let _w = layer.frame.width;
@@ -17,6 +33,7 @@ function generateShapePath (layer, offset) {
     for (let i = 1; i < points.length; i++) {
         let curr = points[i];
         let prev = i === 0? points[points.length - 1] : points[i - 1];
+        // d += calculatePathSegment(prev, curr);
         let p = parsePoint(curr.point);
 
         if (curr.hasCurveTo) {
@@ -71,41 +88,6 @@ function generateRectangle (layer, offset) {
 
     return d.replace(/-0/g, '0')
            
-}
-
-function createLinearGradient (fill) {
-    let id = `__gradient${gradientIndex++}`;
-    let start = parseNumberSet(fill.gradient.from).map(v => v * 100);
-    let end = parseNumberSet(fill.gradient.to).map(v => v * 100);
-
-    let css = (function () {
-        let angle = Math.round(Math.atan2(end[1] - start[1], end[0] - start[0]) * 180 / Math.PI);
-        let stops = fill.gradient.stops.map(stop => {
-            return `${getDOMColor(stop.color)} ${stop.position * 100}%`; 
-        })
-
-        return `linear-gradient(${angle}deg, ${stops.join(', ')})`;
-    })();
-
-    return {
-        gradient: (
-            <linearGradient 
-                id={id} 
-                x1={start[0] + '%'} 
-                y1={start[1] + '%'} 
-                x2={end[0] + '%'} 
-                y2={end[1] + '%'}>
-                {fill.gradient.stops.map(stop => (
-                    <stop 
-                        stop-color={getDOMColor(stop.color)} 
-                        offset={stop.position * 100} 
-                    />
-                ))}
-            </linearGradient>
-        ),
-        url: `url(#${id})`,
-        css: css
-    };
 }
 
 export function createShapePath (layer, offset = {x: 0, y: 0}) {

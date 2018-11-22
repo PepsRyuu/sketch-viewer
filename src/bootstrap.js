@@ -1,4 +1,4 @@
-require('babel-register')();
+require('@babel/register')();
 let less = require('less');
 let fs = require('fs');
 

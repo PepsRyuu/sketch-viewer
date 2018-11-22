@@ -143,11 +143,15 @@ let clipIndex = 0;
 export function applyClipMasks (el, layer, parentEl) {
     if (layer.clippingMask) {
         let clipId = `__clip__${clipIndex++}`;
-        let previous = layer.parent.layers[layer.parent.layers.findIndex(l => l === layer) - 1];
+        let maskEl = layer.parent.layers.find(l => l.hasClippingMask);
 
-        if (previous) {
-            let clipEl = JSON.parse(JSON.stringify(previous.__element.children.find(c => c.nodeName !== 'defs')));
-            setStyle(clipEl, 'transform', `translate(${layer.frame.x * -1}px, ${layer.frame.y * -1}px)`);
+        if (maskEl) {
+            let clipEl = JSON.parse(JSON.stringify(maskEl.__element.children.find(c => c.nodeName !== 'defs')));
+            let clipElTransform = '';
+            clipElTransform += ` translate(${maskEl.frame.x - layer.frame.x}px, ${maskEl.frame.y - layer.frame.y}px) `
+            clipElTransform += maskEl.rotation? `translate(${maskEl.frame.width / 2}px,${maskEl.frame.height / 2}px) rotate(${maskEl.rotation * -1}deg) translate(-${maskEl.frame.width / 2}px, -${maskEl.frame.height / 2}px)`: '';
+
+            setStyle(clipEl, 'transform', clipElTransform);
 
             el.attributes['clip-path'] = `url(#${clipId})`;
 

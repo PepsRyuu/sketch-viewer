@@ -1,6 +1,5 @@
 import bplist from 'bplist-parser';
 
-
 export default function PListResolver (encodedArchive) {
     let output = {};
 

@@ -1,0 +1,61 @@
+import { Component } from 'preact';
+
+import BaseStyler from './BaseStyler';
+import ArtboardElement from './elements/ArtboardElement';
+import TextElement from './elements/TextElement';
+import ShapeElement from './elements/ShapeElement';
+
+const ELEMENT_MAP = {
+    'artboard': ArtboardElement,
+    'text': TextElement,
+    'rectangle': ShapeElement,
+    'oval': ShapeElement,
+    'shapePath': ShapeElement
+};
+
+function renderNode (node) {
+    let el;
+
+    if (ELEMENT_MAP[node._class]) {
+        el = ELEMENT_MAP[node._class](node);
+    } else {
+        el = <div />
+    }
+
+    if (!el.attributes) {
+        el.attributes = {};
+    }
+
+    if (!el.attributes.style) {
+        el.attributes.style = {};
+    }
+
+    el.attributes['data-class'] = node._class;
+    el.attributes['data-id'] = node.id;
+
+    el.attributes.onClick = () => {
+        this.props.onOutputClick(node);
+    };
+
+    el.attributes.onMouseEnter = () => {
+        this.props.onOutputHover(node);
+    };
+
+    BaseStyler(node, el);
+
+    if (node.children.length > 0) {
+       el.children = node.children.map(n => renderNode.call(this, n)); 
+    }
+
+    return el;
+}
+
+export default class RendererOutput extends Component {
+    render () {
+        return (
+            <div class="RendererOutput">
+                {renderNode.call(this, this.props.data)}
+            </div>
+        );
+    }
+}

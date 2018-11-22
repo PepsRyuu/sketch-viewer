@@ -1,10 +1,9 @@
 import { Component, render } from 'preact';
-import EventBus from '../../EventBus';
 import CanvasNavigator from './CanvasNavigator';
 import ElementArtboard from './elements/Artboard';
 import ElementGroup from './elements/Group';
-import ElementShapeGroup from './elements/ShapeGroup_redo';
-import ElementShape from './elements/Shape_redo';
+import ElementShapeGroup from './elements/ShapeGroup';
+import ElementShape from './elements/Shape';
 import ElementBitmap from './elements/Bitmap';
 import ElementText from './elements/Text';
 import ElementSymbolInstance from './elements/SymbolInstance';
@@ -37,6 +36,7 @@ export default class HTMLCanvas extends Component {
 
     componentDidMount () {
         this.navigator = new CanvasNavigator(this);
+        this.getDataFromProps(this.props);
         this.forceUpdate();
 
         window.addEventListener('resize', () => {
@@ -44,9 +44,16 @@ export default class HTMLCanvas extends Component {
         });
     }
 
-    componentWillReceiveProps() {
+    componentWillReceiveProps(nextProps) {
         this.navigator.reset();
+        this.getDataFromProps(nextProps)
         this.applyTransform();
+    }
+
+    getDataFromProps (props) {
+        this.setState({
+            data: JSON.parse(JSON.stringify(props.data))
+        });
     }
 
     onMouseWheel (e) {
@@ -203,29 +210,35 @@ export default class HTMLCanvas extends Component {
         let width = this.base? this.base.offsetWidth : 0;
         let height = this.base? this.base.offsetHeight : 0;
 
-        return (
-            <div 
-                class="Canvas" 
-                style="width: 100%; height: 100%; overflow: hidden; position: relative" 
-                onMouseWheel={this.onMouseWheel.bind(this)} 
-                onMouseDown={this.onMouseDown.bind(this)}
-            >  
-                <div class="wrapper">
-                    {(function () {
-                        try {
-                            return renderLayers.call(this, this.props.data.layers)
-                        } catch (e) {
-                            return (
-                                <div style="white-space: pre-wrap; font-family: monospace;">
-                                    {e.stack}
-                                </div>
-                            )
-                        }
-                    }.bind(this))()}
+        if (this.state.data) {
+            return (
+                <div 
+                    class="Canvas" 
+                    style="width: 100%; height: 100%; overflow: hidden; position: relative" 
+                    onMouseWheel={this.onMouseWheel.bind(this)} 
+                    onMouseDown={this.onMouseDown.bind(this)}
+                >  
+                    <div class="wrapper">
+                        {(function () {
+                            try {
+                                return renderLayers.call(this, this.state.data.layers)
+                            } catch (e) {
+                                return (
+                                    <div style="white-space: pre-wrap; font-family: monospace;">
+                                        {e.stack}
+                                    </div>
+                                )
+                            }
+                        }.bind(this))()}
+                    </div>
+                    <canvas ref={e => this.canvas = e} width={width} height={height} style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none" />
                 </div>
-                <canvas ref={e => this.canvas = e} width={width} height={height} style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none" />
-            </div>
-        );
+            );
+        } else {
+            return <div />
+        }
+
+        
         
     }
 

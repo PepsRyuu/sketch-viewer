@@ -150,6 +150,9 @@ export default function ElementText ({layer}) {
     // if that exists, use that, else use other properties
     // Just do a simple map of the below for attributed
 
+    // TODO: Adjust letter spacing so content fits into box
+    // Use requestAnimationFrame for this
+
     return (
         <div 
             style={{

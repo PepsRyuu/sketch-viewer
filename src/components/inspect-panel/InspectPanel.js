@@ -1,6 +1,5 @@
 import { Component } from 'preact';
 import './InspectPanel.less'
-import EventBus from '../../EventBus';
 import VariableMap from '../variable-map/VariableMap';
 
 export default class InspectPanel extends Component {
@@ -14,7 +13,7 @@ export default class InspectPanel extends Component {
     }
 
     componentDidMount () {
-        EventBus.subscribe('inspect-element', this.onInspectElement.bind(this));
+        // EventBus.subscribe('inspect-element', this.onInspectElement.bind(this));
     }
 
     onInspectElement ({ element, layer}) {
@@ -56,14 +55,27 @@ export default class InspectPanel extends Component {
     render () {
         return (
             <div class="InspectPanel">
-                {this.state.properties.map(property => (
-                    <div class="InspectPanel-property">
-                        <h3>{property.title}</h3>
-                        <p>{property.value}</p>
-                        {property.variable || null}
-                        {property.extra || null}
+                {/*this.state.properties.map(property => (
+                     <div class="InspectPanel-property">
+                         <h3>{property.title}</h3>
+                         <p>{property.value}</p>
+                         {property.variable || null}
+                         {property.extra || null}
+                     </div>
+                    
+                ))*/}
+                <div class="InspectPanel-property">
+                        <h3>Font Family</h3>
+                        <p>Arial, sans-serif</p>
                     </div>
-                ))}
+                    <div class="InspectPanel-property">
+                        <h3>Font Size</h3>
+                        <p>14px</p>
+                    </div>
+                    <div class="InspectPanel-property">
+                        <h3>Fill</h3>
+                        <p>rgb(100, 100, 100)</p>
+                    </div>
             </div>
         )
     }

@@ -1,18 +1,13 @@
-import { getDOMColor, parseNumberSet } from '../utils';
-import { getFill, getBorder } from './ShapeStyling';
-import { createShapePath } from './ShapeGenerator';
-
-function generateShapePath (layer, isShapeGroup) {
+function generateShapePath (node, offset) {
     function parsePoint (point) {
-        let _w = layer.frame.width;
-        let _h = layer.frame.height;
-        let _x = 0;
-        let _y = 0;
-        let parts = point.replace(/\{|\}/g, '').split(', ').map(parseFloat);
-        return (parts[0] * _w + _x) + ' ' + (parts[1] * _h + _y);
+        let _w = node.width;
+        let _h = node.height;
+        let _x = offset.x;
+        let _y = offset.y;
+        return (point[0] * _w + _x) + ' ' + (point[1] * _h + _y);
     }
 
-    let points = layer.points || layer.path.points;
+    let points = node.path.points;
     let start = parsePoint(points[0].point);
     let d = `M ${start} `;
 
@@ -32,7 +27,7 @@ function generateShapePath (layer, isShapeGroup) {
 
     }
 
-    if (layer.isClosed || (layer.path && layer.path.isClosed)) {
+    if (node.path.closed) {
         let p = parsePoint(points[0].point);
 
         if (points[0].hasCurveTo) {
@@ -51,10 +46,10 @@ function generateShapePath (layer, isShapeGroup) {
     return d.replace(/-0/g, '0')
 }
 
-function generateRectangle (layer, isShapeGroup) {
-    let { width, height } = layer.frame;
-    let x = 0, y = 0;
-    let points = layer.points || layer.path.points;
+function generateRectangle (node, offset) {
+    let { width, height } = node;
+    let x = offset.x, y = offset.y;
+    let points = node.path.points;
 
     let corners = points.map(p => {
         return Math.min(Math.min(width, height) / 2, p.cornerRadius);
@@ -75,28 +70,6 @@ function generateRectangle (layer, isShapeGroup) {
            
 }
 
-export default function ElementShape ({ layer }) {
-    let d = createShapePath(layer);
-    let el = <path d={d} />
-    let fill = getFill(layer);
-    let border = getBorder(layer, [el]);
-
-    let props = {
-        width: layer.frame.width,
-        height: layer.frame.height,
-        overflow: 'visible',
-        style: {},
-        ...fill.props,
-        ...border.props
-    };
-
-    return (
-        <svg {...props}>
-            <defs>
-                {fill.output}
-                {border.output}
-            </defs>
-            {el}
-        </svg>
-    )
+export function createShapePath (node, offset = {x: 0, y: 0}) {
+    return node._class === 'rectangle'? generateRectangle(node, offset) : generateShapePath(node, offset);
 }

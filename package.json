@@ -6,10 +6,11 @@
     "test:ui": "mocha-istanbul-ui test/setup.js \"test/**/*.js\""
   },
   "dependencies": {
-    "babel-core": "^6.24.1",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
-    "babel-plugin-transform-react-jsx": "^6.24.1",
-    "babel-register": "^6.26.0",
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.1.6",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/register": "^7.0.0",
     "bplist-parser": "^0.1.1",
     "dropdown-interface": "^0.1.1",
     "electron": "^1.8.3",
@@ -21,7 +22,6 @@
   },
   "devDependencies": {
     "babel-plugin-istanbul": "^5.1.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "chai": "^4.2.0",
     "mocha-istanbul-ui": "0.0.8"
   }

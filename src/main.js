@@ -1,5 +1,5 @@
 import { render, h, Component } from 'preact';
-import Settings from './Settings';
+import Settings from './utils/Settings';
 import App from './App';
 import './main.less';
 

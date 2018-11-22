@@ -56,47 +56,56 @@ export function getFill (layer) {
                 style={`mix-blend-mode: ${blend}`}
             />
         )
-    }
+    };
 
-    fills.forEach((fill) => {
-        if (fill.isEnabled) {
-            let color, blend;
+    let getFromFillType = (fill) => {
+        let color;
 
-            if (fill.fillType === 0) {
-                color = getDOMColor(fill.color);
-            }
-
-            if (fill.fillType === 1) {
-                let { gradient, url } = createLinearGradient(fill);
-                output.push(gradient);
-                color = url;
-            }
-
-            blend = BlendingMode[fill.contextSettings? fill.contextSettings.blendMode : 0];
-            pushToPattern(color, blend);
+        if (fill.fillType === 0) {
+            color = getDOMColor(fill.color);
         }
-    });
+
+        if (fill.fillType === 1) {
+            let { gradient, url } = createLinearGradient(fill);
+            output.push(gradient);
+            color = url;
+        }
+
+        return color;
+    };
+
+    fills = fills.filter(f => f.isEnabled);
+
+    let css;
 
     if (fills.length === 0) {
-        pushToPattern('rgba(1,1,1,0)', 'normal');
+        css = 'rgba(1,1,1,0)';
+    } else if (fills.length === 1) {
+        css = getFromFillType(fills[0]);
+    } else {
+        fills.forEach((fill) => {
+            let color = getFromFillType(fill);
+            let blend = BlendingMode[fill.contextSettings? fill.contextSettings.blendMode : 0];
+            pushToPattern(color, blend);
+        });
+
+        let id = `__pattern${patternIndex++}`;
+        css = `url(#${id})`;
+
+        output.push(
+            <pattern 
+                id={id} 
+                patternUnits="userSpaceOnUse" 
+                patternContentUnits="userSpaceOnUse" 
+                width={layer.frame.width} 
+                height={layer.frame.height}
+            >{pattern}</pattern>
+        )
     }
 
-    let id = `__pattern${patternIndex++}`;
-    let url = `url(#${id})`;
-
-    output.push(
-        <pattern 
-            id={id} 
-            patternUnits="userSpaceOnUse" 
-            patternContentUnits="userSpaceOnUse" 
-            width={layer.frame.width} 
-            height={layer.frame.height}
-        >{pattern}</pattern>
-    )
-
     return { 
-        props: { fill: url }, 
-        output 
+        props: { fill: css }, 
+        output
     };
 }
 

@@ -70,6 +70,6 @@ function generateRectangle (node, offset) {
            
 }
 
-export function createShapePath (node, offset = {x: 0, y: 0}) {
-    return node._class === 'rectangle'? generateRectangle(node, offset) : generateShapePath(node, offset);
+export function createShapePath (_class, node, offset = {x: 0, y: 0}) {
+    return _class === 'rectangle'? generateRectangle(node, offset) : generateShapePath(node, offset);
 }

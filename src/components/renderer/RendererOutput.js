@@ -4,13 +4,17 @@ import BaseStyler from './BaseStyler';
 import ArtboardElement from './elements/ArtboardElement';
 import TextElement from './elements/TextElement';
 import ShapeElement from './elements/ShapeElement';
+import BitmapElement from './elements/BitmapElement';
+import ShapeGroupElement from './elements/ShapeGroupElement';
 
 const ELEMENT_MAP = {
     'artboard': ArtboardElement,
     'text': TextElement,
     'rectangle': ShapeElement,
     'oval': ShapeElement,
-    'shapePath': ShapeElement
+    'shapePath': ShapeElement,
+    'bitmap': BitmapElement,
+    'shapeGroup': ShapeGroupElement
 };
 
 function renderNode (node) {
@@ -52,10 +56,16 @@ function renderNode (node) {
 
 export default class RendererOutput extends Component {
     render () {
-        return (
-            <div class="RendererOutput">
-                {renderNode.call(this, this.props.data)}
-            </div>
-        );
+        try {
+            return (
+                <div class="RendererOutput">
+                    {renderNode.call(this, this.props.data)}
+                </div>
+            );
+        } catch (e) {
+            console.error(e);
+            return (<div style="white-space: pre-wrap">{e.message + e.stack}</div>);
+        }
+       
     }
 }

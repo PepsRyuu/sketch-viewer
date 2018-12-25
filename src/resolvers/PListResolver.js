@@ -6,7 +6,7 @@ export default function PListResolver (encodedArchive) {
     // Base64 to Object Archive
     let buffer = Buffer.from(encodedArchive, 'base64');
     let archive = bplist.parseBuffer(buffer)[0];
-    let { $objects, $top } = archive[0];
+    let { $objects, $top } = archive;
 
     function getByUID (uid) {
         let value = $objects[uid];
@@ -37,7 +37,11 @@ export default function PListResolver (encodedArchive) {
 
     let top = $objects[$top.root.UID];
     Object.keys(top).forEach(key => {
-        output[key] = getByUID(top[key].UID);
+        if (top[key].UID) {
+            output[key] = getByUID(top[key].UID);
+        } else {
+            output[key] = top[key];
+        }
     });
 
     return output;

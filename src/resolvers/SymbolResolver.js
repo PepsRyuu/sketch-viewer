@@ -38,16 +38,18 @@ function getSymbolMaster (id) {
 }
 
 function applyOverrides ( layer) {
-    function findTargetLayer (layers, id) {
-        for (let i = 0; i < layers.length; i++) {
-            if (layers[i].do_objectID === id) {
-                return layers[i];
-            }
+    function findTargetLayer (layer, id) {
+        if (layer.layers) {
+            for (let i = 0; i < layer.layers.length; i++) {
+                if (layer.layers[i].do_objectID === id) {
+                    return layer.layers[i];
+                }
 
-            if (layers[i].layers) {
-                let hr = findTargetLayer(layers[i].layers, id);
-                if (hr) {
-                    return hr;
+                if (layer.layers[i].layers) {
+                    let hr = findTargetLayer(layer.layers[i], id);
+                    if (hr) {
+                        return hr;
+                    }
                 }
             }
         }
@@ -58,40 +60,43 @@ function applyOverrides ( layer) {
             let [id_path, override_type] = override.overrideName.split('_');
             let id_path_parts = id_path.split('/');
 
-            id_path_parts.forEach(id => {
-                let target_layer = findTargetLayer(layer.layers, id);
+            let target_layer = layer;
+            
+            for (let i = 0; i < id_path_parts.length; i++) {
+                let found = findTargetLayer(target_layer, id_path_parts[i]);
+                if (found) {
+                    target_layer = found;
+                }
 
-                if (target_layer) {
-                    if (override_type === 'stringValue') {
-                        // TODO: Normalize string layer
-                        if (target_layer.attributedString) {
-                            target_layer.attributedString.string = override.value;
+                if (i === id_path_parts.length - 1) {
+                    break;
+                }
+            }
+
+            if (target_layer && !target_layer.__overrided) {
+                target_layer.__overrided = true;
+
+                if (override_type === 'stringValue') {
+                    // TODO: Normalize string layer
+                    if (target_layer.attributedString) {
+                        target_layer.attributedString.string = override.value;
+                        if (target_layer.attributedString.attributes.length === 1) {
+                            target_layer.attributedString.attributes[0].length = override.value.length;
                         }
                     }
-
-                    if (override_type === 'layerStyle') {
-                        target_layer.style = current.foreign.foreignLayerStyles[override.value];
-                    }
-
-                    if (override_type === 'textStyle') {
-                        // TODO: Attributed string layer
-                        target_layer.textStyle = current.foreign.foreignTextStyles[override.value];
-                    }
                 }
-            });
+
+                if (override_type === 'layerStyle') {
+                    target_layer.style = current.foreign.foreignLayerStyles[override.value];
+                }
+
+                if (override_type === 'textStyle') {
+                    // TODO: Attributed string layer
+                    target_layer.textStyle = current.foreign.foreignTextStyles[override.value];
+                }
+            }
         });
     }
-
-    // Constrain frames.
-    layer.layers.forEach(child => {
-        if (child.frame.width > layer.frame.width) {
-            child.frame.width = layer.frame.width;
-        }
-
-        if (child.frame.height > layer.frame.height) {
-            child.frame.height = layer.frame.height;
-        }
-    })
 }
 
 function resolveSymbols (layers) {
@@ -102,8 +107,48 @@ function resolveSymbols (layers) {
 
                 // Ensure master is found. Might not exist.
                 if (master) {
+                    layers[i].resizesContent = master.resizesContent;
                     layers[i].layers = JSON.parse(JSON.stringify(master.layers));
-                    applyOverrides(layers[i]);
+                    let masterFrame = master.frame;
+
+                    let resizeLayers = (layer) => {
+                        if (layer.layers) {
+                            layer.layers.forEach(child => {
+                                // TODO: Elements with padding of some sort.
+
+                                // TODO: Master frame is wrong. not taking layer[i] into account
+
+                                if (Math.round(child.frame.width) >= masterFrame.width) {
+                                    child.frame.__width = child.frame.width;
+                                    child.frame.width = layer.frame.width;
+                                }
+
+                                if (Math.round(child.frame.height >= masterFrame.height)) {
+                                    child.frame.__height = child.frame.height;
+                                    child.frame.height = layer.frame.height;
+                                }
+
+                                // if (Math.round(child.frame.width) >= layer.frame.width) {
+                                //     child.frame.__width = child.frame.width;
+                                //     child.frame.width = layer.frame.width;
+                                // }
+
+                                // if (Math.round(child.frame.height) >= layer.frame.height) {
+                                //     child.frame.__height = child.frame.height;
+                                //     child.frame.height = layer.frame.height;
+                                // }
+
+                                // if (child._class === 'text') {
+                                //     child.frame.width = masterFrame.width;
+                                //     child.frame.height = masterFrame.height;
+                                // }
+
+                                resizeLayers(child);
+                            });
+                        }
+                    }
+
+                    resizeLayers(layers[i]);
                 }
             }
 

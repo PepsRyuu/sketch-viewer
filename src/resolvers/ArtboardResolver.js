@@ -1,17 +1,18 @@
-// import TextModel from '../models/TextModel';
-// import ShapeModel from '../models/ShapeModel';
-// import ShapeGroupModel from '../models/ShapeGroupModel';
 import BaseModel from '../models/BaseModel';
 import ArtboardModel from '../models/ArtboardModel';
 import TextModel from '../models/TextModel';
 import ShapeModel from '../models/ShapeModel';
+import BitmapModel from '../models/BitmapModel';
+import ShapeGroupModel from '../models/ShapeGroupModel';
 
 const CLASS_MODELS = {
     'artboard': ArtboardModel,
     'text': TextModel,
     'rectangle': ShapeModel,
     'oval': ShapeModel,
-    'shapePath': ShapeModel
+    'shapePath': ShapeModel,
+    'bitmap': BitmapModel,
+    'shapeGroup': ShapeGroupModel
 };
 
 function layerToModel (output, parent, layer) {
@@ -21,14 +22,17 @@ function layerToModel (output, parent, layer) {
     output._class = layer._class;
 
     output.attributes = {
-        ...BaseModel(layer),
-        ...model(layer)
+        ...BaseModel(layer, parent),
+        ...model(layer, parent)
     };
 
     if (layer.layers) {
-        output.children = layer.layers.map(l => {
-            return layerToModel(createNode(), output, l);
-        });
+        // Would use map normally, but children needs to be updated
+        // so that stuff like clip-path can be calculated properly
+        for (let i = 0; i < layer.layers.length; i++) {
+            let child = layer.layers[i];
+            output.children.push(layerToModel(createNode(), output, child));
+        }
     }
 
     return output;

@@ -1,4 +1,4 @@
-export default function BaseModel (layer) {
+export default function BaseModel (layer, parent) {
 
     let scaleX = layer.isFlippedHorizontal? -1 : 1;
     let scaleY = layer.isFlippedVertical? -1 : 1;
@@ -18,6 +18,9 @@ export default function BaseModel (layer) {
         'rotation': rotation,
         'scaleX': scaleX,
         'scaleY': scaleY,
-        'opacity': opacity
+        'opacity': opacity,
+        '__overrided': layer.__overrided,
+        'useAsClipPath': layer.hasClippingMask,
+        'clipNode': layer.clippingMask && parent.children.find(n => n.useAsClipPath),
     }
 }

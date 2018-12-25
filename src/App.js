@@ -47,7 +47,8 @@ export default class App extends Component {
         let input = e.target.files[0];
 
         this.setState({ 
-            loading: true, 
+            loading: true,
+            file: undefined, 
             resolvedArtboard: undefined,
             selectedPage: undefined,
             selectedArtboard: undefined
@@ -56,9 +57,10 @@ export default class App extends Component {
         FileResolver(input).then(file => {
             this.state.file = file;
             this.state.loading = false;
+            window.__page__images = file.images;
+
             this.setUpdatedPageAndArtboard(0, 0);
 
-            window.__page__images = file.images;
         });
     }
 

@@ -1,5 +1,6 @@
 import { getDOMColor, parseNumberSet } from '../utils/index';
 import { BlendingMode } from '../utils/Constants';
+import { getImageData } from '../utils/index';
 
 let gradientIndex = 0;
 let patternIndex = 0;
@@ -46,6 +47,13 @@ export function getFill (layer) {
                     })
                 })
             }
+
+            if (f.fillType === 4) {
+                output.push({
+                    type: 'image',
+                    href: getImageData(f.image._ref)
+                });
+            }
         });
     }
 
@@ -70,5 +78,37 @@ export function getBorder (layer) {
             dasharray: dashed? opts.dashPattern[0] : 0,
             position: b.position === 1? 'inner' : 'normal'
         };
+    }
+}
+
+export function getInnerShadow (layer) {
+    let shadows = (layer.style && layer.style.innerShadows) || [];
+    shadows = shadows.filter(s => s.isEnabled);
+
+    if (shadows.length > 0) {
+        let s = shadows[0];
+
+        return {
+            color: getDOMColor(s.color),
+            offsetX: s.offsetX,
+            offsetY: s.offsetY,
+            blurRadius: s.blurRadius, 
+        };
+    }
+}
+
+export function getShadow (layer) {
+    let shadows = (layer.style && layer.style.shadows) || [];
+    shadows = shadows.filter(s => s.isEnabled);
+
+    if (shadows.length > 0) {
+        let s = shadows[0];
+
+        return {
+            color: getDOMColor(s.color),
+            offsetX: s.offsetX,
+            offsetY: s.offsetY,
+            blurRadius: s.blurRadius
+        }
     }
 }

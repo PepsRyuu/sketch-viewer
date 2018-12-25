@@ -1,11 +1,12 @@
 let gradientIndex = 0;
 let patternIndex = 0;
 let borderClipIndex = 0;
+let imageIndex = 0;
 
 function createLinearGradient (f) {
     let id = `__gradient${gradientIndex++}`;
-    let start = f.gradient.start.map(v => v * 100);
-    let end = f.gradient.end.map(v => v * 100);
+    let start = f.start.map(v => v * 100);
+    let end = f.end.map(v => v * 100);
 
     return {
         gradient: (
@@ -15,7 +16,7 @@ function createLinearGradient (f) {
                 y1={start[1] + '%'} 
                 x2={end[0] + '%'} 
                 y2={end[1] + '%'}>
-                {f.gradient.stops.map(stop => (
+                {f.stops.map(stop => (
                     <stop 
                         stop-color={stop.color} 
                         offset={stop.position * 100} 
@@ -50,8 +51,23 @@ export function getFill (node) {
         }
 
         if (f.type === 'gradient') {
-            let { gradient, url } = createLinearGradient(fill);
+            let { gradient, url } = createLinearGradient(f);
             return { css: url, output: gradient };
+        }
+
+        if (f.type === 'image') {
+            let id = `__imagepattern${imageIndex++}`;
+            let css = `url(#${id})`;
+            let output = (
+                <pattern 
+                    id={id} 
+                    patternUnit="objectBoundingBox"
+                    patternContentUnit="objectBoundingBox"
+                    width="1"
+                    height="1"
+                ><image preserveAspectRatio="none" href={f.href} width={node.width} height={node.height} /></pattern>
+            );
+            return { css, output };
         }
     };
 
@@ -65,7 +81,7 @@ export function getFill (node) {
         fills.forEach((f) => {
             let tmp = getFromFillType(f);
             output.push(tmp.output);
-            pushToPattern(tmp.css, blend);
+            pushToPattern(tmp.css, f.blend);
         });
 
         let id = `__pattern${patternIndex++}`;
@@ -88,7 +104,7 @@ export function getFill (node) {
     };
 }
 
-export function getBorder (node, els) {
+export function getBorder (node, els = []) {
 
     if (node.border) {
         let props = {};
@@ -116,6 +132,77 @@ export function getBorder (node, els) {
         }
 
         return { props, output };
+    }
+
+    return {};
+}
+
+let filterId = 0;
+export function getInnerShadow (node, els = [], fill) {
+    if (node.innerShadow) {
+        let s = node.innerShadow;
+        let id = `__inset_shadow__${filterId++}`;
+        let isTransparent = fill.props.fill === 'rgba(1, 1, 1, 0)';
+
+        if (isTransparent) {
+
+            els[0].attributes.fill = 'rgba(1,1,1,1)';
+        }
+
+        return {
+            props: {
+                filter: `url(#${id})`
+            },
+            output: (
+                <filter id={id}>
+                    <feOffset
+                        dx={s.offsetX}
+                        dy={s.offsetY}
+                    />
+                    <feGaussianBlur
+                        stdDeviation={s.blurRadius}
+                        result='offset-blur'
+                    />
+                    <feComposite 
+                        operator="out" 
+                        in="SourceGraphic" 
+                        in2="offset-blur"
+                        result="inverse" 
+                    />
+                    <feFlood
+                        flood-color={s.color}
+                        result='color'
+                    />
+                    <feComposite
+                        operator='in'
+                        in='color'
+                        in2='inverse'
+                        result='shadow'
+                    />
+                    {!isTransparent? 
+                        <feComposite
+                            operator="over"
+                            in="shadow"
+                            in2="SourceGraphic"
+                        />
+                    : null}
+                </filter>
+            )
+        };
+    }
+
+    return {};
+}
+
+export function getShadow (node, els = []) {
+    if (node.shadow) {
+        let s = node.shadow;
+
+        return {
+            props: {
+                filter: `drop-shadow(${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${s.color})`
+            }
+        }
     }
 
     return {};

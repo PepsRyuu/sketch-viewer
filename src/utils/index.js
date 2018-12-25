@@ -45,6 +45,22 @@ export function withProperty (layer, path, callback) {
     } 
 }
 
+export function getImageData (ref) {
+    let data;
+    let extension;
+
+    for (let i = 0; i < window.__page__images.length; i++) {
+        let entry = window.__page__images[i];
+        if (entry.name.indexOf(ref) === 0) {
+            data = entry.data;
+            extension = entry.name.match(/\.[\w]+$/)[0];
+            break;
+        }
+    }
+
+    return `data:image/${extension.slice(1)};base64,${data}`;
+}
+
 export function getProperty (layer, path) {
     let parts = path.split('.');
     let partIndex = 0;

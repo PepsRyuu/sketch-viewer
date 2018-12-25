@@ -41,3 +41,11 @@ export const BlendingMode = {
     14: 'color',
     15: 'luminosity'
 };
+
+export const BooleanOperations = {
+    '-1': 'none',
+    '0': 'union',
+    '1': 'subtract',
+    '2': 'intersect',
+    '3': 'difference'
+};

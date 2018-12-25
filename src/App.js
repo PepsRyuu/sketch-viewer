@@ -23,6 +23,8 @@ export default class App extends Component {
             selectedPage: undefined,
             selectedArtboard: undefined
         };
+
+        this.onNodeClick = this.onNodeClick.bind(this);
     }
 
     /**
@@ -105,6 +107,12 @@ export default class App extends Component {
         }
     }
 
+    onNodeClick (node) {
+        this.setState({
+            clickedNode: node
+        });
+    }
+
     /**
      * Render.
      *
@@ -147,11 +155,11 @@ export default class App extends Component {
                 <div class="App-body">
                     <div class="App-canvas">
                         {this.state.resolvedArtboard && (
-                            <Renderer data={this.state.resolvedArtboard} />
+                            <Renderer data={this.state.resolvedArtboard} onNodeClick={this.onNodeClick}/>
                         )}
                     </div>
                     <div class="App-inspect">
-                        <InspectPanel />
+                        <InspectPanel node={this.state.clickedNode}/>
                     </div>
                 </div>
             </div>

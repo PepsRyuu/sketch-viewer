@@ -32,9 +32,15 @@ export default class Renderer extends Component {
     }
 
     componentWillReceiveProps (nextProps) {
-        this.navigator.reset();
-        this.applyTransform();
-        this.setStateFromProps(nextProps);
+        if (nextProps.data !== this.props.data) {
+            this.navigator.reset();
+            this.applyTransform();
+            this.setStateFromProps(nextProps);
+        }
+    }
+
+    shouldComponentUpdate (nextProps) {
+        return !this.state.data || nextProps.data !== this.props.data;
     }
 
     setStateFromProps (props) {
@@ -63,7 +69,7 @@ export default class Renderer extends Component {
     }
 
     onOutputClick (node) {
-        // console.log(node);
+        this.props.onNodeClick(node);
     }
 
     onOutputHover (node) {

@@ -68,7 +68,7 @@ export function getBorder (layer) {
     if (borders.length > 0) {
         // support for single border only currently
         let b = borders[0];
-        let opts = borders[0].borderOptions || {};
+        let opts = layer.style.borderOptions || {};
         let dashed = opts.dashPattern && opts.dashPattern.length > 0;
 
         return {

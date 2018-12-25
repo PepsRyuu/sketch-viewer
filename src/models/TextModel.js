@@ -13,7 +13,7 @@ function getFontStyle (attrs) {
         'letter-spacing': (attrs.kerning || -0.1) + 'px',
         'font-size': size,
         'font-weight': weight,
-        'font-family': family
+        'font-family': family + ', sans-serif'
     };
 }
 

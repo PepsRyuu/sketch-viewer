@@ -1,7 +1,7 @@
-let ElementText = require('../../src/components/html-canvas/elements/Text').default;
+let ElementText = require('../../src/components/renderer/elements/TextElement').default;
+let ArtboardResolver = require('../../src/resolvers/ArtboardResolver').default;
 
 let LayerFrame = (x, y, w, h) => ({
-    __resolved: {},
     _class: 'text',
     frame: {
         height: h,
@@ -9,17 +9,15 @@ let LayerFrame = (x, y, w, h) => ({
     }
 });
 
-let LayerString = (value) => ({
+let LayerString = (value, family, size, rgba, transform) => ({
     attributedString: {
         _class: 'attributedString',
-        string: value
-    }
-});
-
-let LayerFont = (family, size, rgba, transform) => ({
-    style: {
-        textStyle: {
-            encodedAttributes: {
+        string: value,
+        attributes: [{
+            location: 0,
+            length: value.length,
+            attributes: {
+                paragraphStyle: {},
                 MSAttributedStringFontAttribute: {
                     _class: 'fontDescriptor',
                     attributes: {
@@ -35,16 +33,16 @@ let LayerFont = (family, size, rgba, transform) => ({
                 },
                 MSAttributedStringTextTransformAttribute: transform === 'uppercase'? 1 : 0
             }
-        }
+        }]
     }
-})
+});
 
 function assertText (node, value) {
-    expect(node.children[0]).to.equal(value);
+    expect(node.children[0].children[0]).to.equal(value);
 }
 
 function assertColor (node, r, g, b, a) {
-    let color = node.attributes.style.color;
+    let color = node.children[0].attributes.style.color;
     let parts = color.match(/\d+/g).map(v => parseInt(v));
     expect(r).to.equal(parts[0]);
     expect(g).to.equal(parts[1]);
@@ -58,46 +56,32 @@ describe('Text', () => {
         it ('attributedString for text content', () => {
             let layer = {
                 ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('Hello World'),
-                ...LayerFont('Arial', 10, 0xFF000000)
+                ...LayerString('Hello World', 'Arial', 10, 0xFF000000)
             };
 
-            let node = ElementText({ layer });
+            let node = ElementText(ArtboardResolver(layer));
             assertText(node, 'Hello World');
         });
 
         it ('should replace unicode line separator with normal line separator', () => {
             let layer = {
                 ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('Hello\u2028World'),
-                ...LayerFont('Arial', 10, 0xFF000000)
+                ...LayerString('Hello\u2028World', 'Arial', 10, 0xFF000000),
             };
 
-            let node = ElementText({ layer });
+            let node = ElementText(ArtboardResolver(layer));
             assertText(node, 'Hello\nWorld');
         });
-
-        it ('MSAttributedStringTextTransformAttribute uppercase', () => {
-            let layer = {
-                ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('Hello World'),
-                ...LayerFont('Arial', 10, 0xFF000000, 'uppercase')
-            };
-
-            let node = ElementText({ layer });
-            assertText(node, 'HELLO WORLD');
-        })
     });
 
     describe('Color', () => {
         it ('style.textStyle.encodedAttributes.MSAttributedStringColorAttribute for font color', () => {
             let layer = {
                 ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('abc'),
-                ...LayerFont('Arial', 10, 0x01020304)
+                ...LayerString('abc', 'Arial', 10, 0x01020304),
             };
 
-            let node = ElementText({ layer });
+            let node = ElementText(ArtboardResolver(layer));
             assertColor(node, 1, 2, 3, 4);
         });
     });
@@ -106,27 +90,25 @@ describe('Text', () => {
         it ('style.textStyle.encodedAttributes.MSAttributedStringFontAttribute for font descriptor', () => {
             let layer = {
                 ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('abc'),
-                ...LayerFont('Arial-Regular', 20, 0xFF000000)
+                ...LayerString('abc', 'Arial-Regular', 20, 0xFF000000),
             };
 
-            let node = ElementText({ layer });
-            expect(node.attributes.style['font-family']).to.equal('Arial, Arial, sans-serif');
-            expect(node.attributes.style['font-size']).to.equal(20);
-            expect(node.attributes.style['font-weight']).to.equal('400');
+            let node = ElementText(ArtboardResolver(layer));
+            expect(node.children[0].attributes.style['font-family']).to.equal('Arial, Arial, sans-serif');
+            expect(node.children[0].attributes.style['font-size']).to.equal(20);
+            expect(node.children[0].attributes.style['font-weight']).to.equal('400');
         })
 
         it ('should put spaces between PascalCasing fonts', () => {
             let layer = {
                 ...LayerFrame(0, 0, 20, 20),
-                ...LayerString('abc'),
-                ...LayerFont('ComicSans-Heavy', 20, 0xFF000000)
+                ...LayerString('abc', 'ComicSans-Heavy', 20, 0xFF000000),
             };
 
-            let node = ElementText({ layer });
-            expect(node.attributes.style['font-family']).to.equal('ComicSans, Comic Sans, sans-serif');
-            expect(node.attributes.style['font-size']).to.equal(20);
-            expect(node.attributes.style['font-weight']).to.equal('900');
+            let node = ElementText(ArtboardResolver(layer));
+            expect(node.children[0].attributes.style['font-family']).to.equal('ComicSans, Comic Sans, sans-serif');
+            expect(node.children[0].attributes.style['font-size']).to.equal(20);
+            expect(node.children[0].attributes.style['font-weight']).to.equal('900');
         });
     });
 });

@@ -13,12 +13,12 @@ export default function ShapeModel (layer, parent) {
             points: (layer.points || (layer.path && layer.path.points)).map(p => {
                 return {
                     cornerRadius: p.cornerRadius,
-                    curveFrom: parseNumberSet(p.curveFrom),
+                    curveFrom: p.curveFrom && parseNumberSet(p.curveFrom),
                     curveMode: p.curveMode,
-                    curveTo: parseNumberSet(p.curveTo),
+                    curveTo: p.curveTo && parseNumberSet(p.curveTo),
                     hasCurveFrom: p.hasCurveFrom,
                     hasCurveTo: p.hasCurveTo,
-                    point: parseNumberSet(p.point)
+                    point: p.point && parseNumberSet(p.point)
                 };
             })
         },

@@ -1,4 +1,5 @@
-let ElementShapeGroup = require('../../src/components/html-canvas/elements/ShapeGroup_redo').default;
+let ElementShapeGroup = require('../../src/components/renderer/elements/ShapeGroupElement').default;
+let ArtboardResolver = require('../../src/resolvers/ArtboardResolver').default;
 let { compareWithArchive } = require('../utils/rasterizer');
 
 let fs = require('fs');
@@ -14,7 +15,7 @@ describe ('ShapeGroup', () => {
                 ...case_json
             };
 
-            let node = ElementShapeGroup({ layer });
+            let node = ElementShapeGroup(ArtboardResolver(layer));
             await compareWithArchive(node, 100, 100, name);
         });
     });

@@ -37,11 +37,13 @@ function renderNode (node) {
     el.attributes['data-class'] = node._class;
     el.attributes['data-id'] = node.id;
 
-    el.attributes.onClick = () => {
+    el.attributes.onClick = e => {
+        e.stopPropagation();
         this.props.onOutputClick(node);
     };
 
-    el.attributes.onMouseEnter = () => {
+    el.attributes.onMouseEnter = e => {
+        e.stopPropagation();
         this.props.onOutputHover(node);
     };
 

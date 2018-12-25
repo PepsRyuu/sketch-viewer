@@ -115,7 +115,7 @@ export function getBorder (node, els = []) {
         props['stroke-width'] = border.width;
 
         if (border.type === 'dashed') {
-            props['stroke-dasharray'] = props.dasharray;
+            props['stroke-dasharray'] = border.dasharray;
         }
 
         if (border.position === 'inner') {

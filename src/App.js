@@ -1,14 +1,12 @@
 import { Component } from 'preact';
 import InspectPanel from './components/inspect-panel/InspectPanel';
-import HTMLCanvas from './components/html-canvas/HTMLCanvas';
+// import HTMLCanvas from './components/html-canvas/HTMLCanvas';
 import SelectBox from './components/select-box/SelectBox';
-import VariableMap from './components/variable-map/VariableMap';
-import JSZip from 'jszip';
+import FileResolver from './resolvers/FileResolver';
+import ArtboardResolver from './resolvers/ArtboardResolver';
+import { OpenJSON } from './utils/index';
+import Renderer from './components/renderer/Renderer';
 import './App.less';
-
-let { shell } = require('electron');
-let fs = require('fs');
-let path = require('path');
 
 /**
  * Main app class.
@@ -21,13 +19,12 @@ export default class App extends Component {
         super();
 
         this.state = {
-            loaded: false,
             loading: false,
-            pages: [],
-            images: [],
             selectedPage: undefined,
             selectedArtboard: undefined
         };
+
+        this.onNodeClick = this.onNodeClick.bind(this);
     }
 
     /**
@@ -49,151 +46,24 @@ export default class App extends Component {
      * @param {Event} e
      */
     onFileLoad (e) {
-        let reader = new FileReader();
-        let file = e.target.files[0];
+        let input = e.target.files[0];
 
-        reader.onload = async (e) => {
-            let zip = await JSZip.loadAsync(e.target.result);
-
-            let pages = [];
-            let images = [];
-            let metadata = JSON.parse(await zip.files['meta.json'].async('text'));
-            let docdata = JSON.parse(await zip.files['document.json'].async('text'));
-
-            // Parse pages and artboards
-            for (let key in metadata.pagesAndArtboards) {
-                let page = metadata.pagesAndArtboards[key];
-                let raw = await zip.files[`pages/${key}.json`].async('text');
-
-                pages.push({
-                    label: page.name,
-                    value: key,
-                    raw: raw,
-                    data: JSON.parse(raw),
-                    artboards: Object.keys(page.artboards).map(key => {
-                        return {
-                            label: page.artboards[key].name,
-                            value: key
-                        }
-                    })
-                });
-            }
-
-            // Parse images
-            for (let file in zip.files) {
-                if (file.indexOf('images/') === 0) {
-                    images.push({
-                        name: file,
-                        data: await zip.files[file].async('base64')
-                    });
-                }
-            }
-
-            // Parse Library Symbols
-            let loadedForeignSymbols = {};
-            let loadedSourceLibraries = {};
-
-            for (let i = 0; i < docdata.foreignSymbols.length; i++) {
-                let foreignSymbol = docdata.foreignSymbols[i];
-                let libpath = path.resolve(path.dirname(file.path), `${foreignSymbol.sourceLibraryName}.sketch`);
-                
-                if (!loadedSourceLibraries[libpath]) {
-                    let libzip = await JSZip.loadAsync(fs.readFileSync(libpath));
-                    let output = {};
-
-                    for (let filename in libzip.files) {
-                        if (filename.indexOf('pages/') === 0) {
-                            output[filename] = JSON.parse(await libzip.files[filename].async('text'));
-                        }
-                    }
-
-                    loadedSourceLibraries[libpath] = output;
-                }
-    
-                let sourcelib = loadedSourceLibraries[libpath];
-
-                for (let page in sourcelib) {
-                    let symbolID = foreignSymbol.originalMaster.symbolID;
-                    let hr = getSymbolMasterImpl(sourcelib[page].layers, symbolID);
-                    if (hr) {
-                        loadedForeignSymbols[foreignSymbol.symbolMaster.symbolID] = hr;
-                        break;
-                    }
-                }
-            }
-
-
-            function getSymbolMasterImpl (layers, id) {
-                for (let i = 0; i < layers.length; i++) {
-                    if (layers[i]._class === 'symbolMaster' && layers[i].symbolID === id) {
-                        return layers[i];
-                    }
-                    if (layers[i].layers) {
-                        getSymbolMasterImpl(layers[i].layers);
-                    }
-                }
-            }
-
-            function getSymbolMaster (id) {
-                for (let key in loadedForeignSymbols) {
-                    if (key === id) {
-                        return loadedForeignSymbols[key];
-                    }
-                }
-
-                for (let i = 0; i < pages.length; i++) {
-                    let hr = getSymbolMasterImpl(pages[i].data.layers, id);
-                    if (hr) {
-                        return hr;
-                    }
-                }
-            }
-
-            function resolveSymbols (layers) {
-                let impl = layers => {
-                    for (let i = 0; i < layers.length; i++) {
-                        if (layers[i]._class === 'symbolInstance') {
-                            let master = getSymbolMaster(layers[i].symbolID);
-
-                            // Ensure master is found. Might not exist.
-                            if (master) {
-                                layers[i].layers = JSON.parse(JSON.stringify(master.layers));
-                            }
-                            
-                        }
-
-                        if (layers[i].layers) {
-                            impl(layers[i].layers);
-                        }
-                    }
-                }
-
-                impl(layers);
-
-            }
-
-            // Go through symbols and duplicate them.
-            // TODO: Need to support symbol overrides.
-            pages.forEach(page => resolveSymbols(page.data.layers));
-
-            // Make it accessible for Bitmap class.
-            window.__page__images = images;
-
-            this.setState({
-                loaded: true,
-                loading: false,
-                pages,
-                selectedPage: 0,
-                selectedArtboard: 0
-            });
-        }
-
-        this.setState({
-            loaded: false,
-            loading: true
+        this.setState({ 
+            loading: true,
+            file: undefined, 
+            resolvedArtboard: undefined,
+            selectedPage: undefined,
+            selectedArtboard: undefined
         });
 
-        reader.readAsArrayBuffer(file);
+        FileResolver(input).then(file => {
+            this.state.file = file;
+            this.state.loading = false;
+            window.__page__images = file.images;
+
+            this.setUpdatedPageAndArtboard(0, 0);
+
+        });
     }
 
     /**
@@ -203,10 +73,11 @@ export default class App extends Component {
      * @param {Object} selected
      */
     onPageChange (selected) {
-        this.setState({
-            selectedPage: this.state.pages.findIndex(p => p.value === selected.value),
-            selectedArtboard: 0
-        });
+        let { pages } = this.state.file;
+        let pageIndex = pages.findIndex(p => p.id === selected.value);
+        let artboardIndex = 0;
+        
+        this.setUpdatedPageAndArtboard(pageIndex, artboardIndex);
     }
 
     /**
@@ -216,32 +87,31 @@ export default class App extends Component {
      * @param {Object} selected
      */
     onArtboardChange (selected) {
+        let { pages } = this.state.file;
+        let pageIndex = this.state.selectedPage;
+        let artboardIndex = pages[pageIndex].artboards.findIndex(a => a.id === selected.value);
+
+        this.setUpdatedPageAndArtboard(pageIndex, artboardIndex);
+    } 
+
+    setUpdatedPageAndArtboard (pageIndex, artboardIndex) {
+        if (this.state.selectedPage !== pageIndex || this.state.selectedArtboard !== artboardIndex) {
+            let artboardId = this.state.file.pages[pageIndex].artboards[artboardIndex].id;
+            let artboardData = this.state.file.pages[pageIndex].data.layers.find(l => l.do_objectID === artboardId)
+
+            this.setState({
+                selectedPage: pageIndex,
+                selectedArtboard: artboardIndex,
+                resolvedArtboard: ArtboardResolver(artboardData)
+            });
+        }
+    }
+
+    onNodeClick (node) {
         this.setState({
-            selectedArtboard: this.state.pages[this.state.selectedPage].artboards.findIndex(a => a.value === selected.value)
+            clickedNode: node
         });
     }
-
-    /**
-     * Tidy up the JSON, and load it in a text editor.
-     *
-     * @method openJSON
-     */
-    async openJSON () {
-        let { raw, value } = this.state.pages[this.state.selectedPage];
-        let json = JSON.stringify(JSON.parse(raw), null, 4);
-        let uri = 'data:application/json;base64,' + Buffer.from(json).toString('base64');
-
-        if (!fs.existsSync('__temp__')) {
-            fs.mkdirSync('__temp__');
-        }
-
-        let filepath = '__temp__/' + value + '.json';
-        fs.writeFileSync(filepath, json);
-
-        shell.openItem(path.resolve(process.cwd(), filepath));        
-    }
-
- 
 
     /**
      * Render.
@@ -249,47 +119,47 @@ export default class App extends Component {
      * @method render
      */
     render () {
-        let pages = this.state.pages, activePage, activeArtboard;
+        let pages, artboards, activePage, activeArtboard;
 
-        if (this.state.loaded) {
-            activePage = this.state.pages[this.state.selectedPage];
-            activeArtboard = activePage.artboards[this.state.selectedArtboard];
+        if (this.state.file) {
+            let { file, selectedPage, selectedArtboard } = this.state;
+
+            pages = file.pages.map(p => ({label: p.name, value: p.id }));
+            artboards = file.pages[selectedPage].artboards.map(a => ({ label: a.name, value: a.id }));
+
+            activePage = file.pages[selectedPage];
+            activeArtboard = file.pages[selectedPage].artboards[selectedArtboard];
         }
 
         return (
             <div class="App">
                 <div class="App-toolbar">
                     <button onClick={this.loadFile.bind(this)}>Load File</button>
-                    {this.state.loading? <div>Loading...</div> : null}
-                    {this.state.loaded? 
+                    {this.state.loading && <div>Loading...</div>}
+                    {!this.state.loading && this.state.file && (
                         <div>
-                            <span>Page: </span>
                             <SelectBox 
                                 items={pages} 
-                                selected={activePage.value}
+                                selected={activePage.id}
                                 onChange={this.onPageChange.bind(this)}
                             /> 
-                            <span>Artboard: </span>
                             <SelectBox
-                                items={activePage.artboards}
-                                selected={activeArtboard.value}
+                                items={artboards}
+                                selected={activeArtboard.id}
                                 onChange={this.onArtboardChange.bind(this)}
                             />
-                            <button onClick={this.openJSON.bind(this)}>Open JSON</button>
-                            <VariableMap />
+                            <button onClick={() => OpenJSON(this.state.file.pages[this.state.selectedPage])}>Open JSON</button>
                         </div>
-                    : null}
+                    )}
                 </div>
                 <div class="App-body">
                     <div class="App-canvas">
-                        {this.state.loaded? <HTMLCanvas data={{
-                            layers:[
-                                activePage.data.layers.find(l => l.do_objectID === activeArtboard.value)
-                            ]
-                        }} /> : null}
+                        {this.state.resolvedArtboard && (
+                            <Renderer data={this.state.resolvedArtboard} onNodeClick={this.onNodeClick}/>
+                        )}
                     </div>
                     <div class="App-inspect">
-                        <InspectPanel />
+                        <InspectPanel node={this.state.clickedNode}/>
                     </div>
                 </div>
             </div>

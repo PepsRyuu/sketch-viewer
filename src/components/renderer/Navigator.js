@@ -35,11 +35,11 @@ function drag (e, onMove, onEnd) {
  *
  * @class CanvasNavigator
  */ 
-export default class CanvasNavigator {
+export default class Navigator {
     constructor (canvas) {
         this.zoom = 1;
         this.pan = {x: 0, y: 0};
-        this.canvas = canvas.base;
+        this.canvas = canvas;
     }
 
     /**
@@ -78,7 +78,7 @@ export default class CanvasNavigator {
         let newZoom = Math.max(0.6, parseFloat((this.zoom + delta).toFixed(1)));
 
         if (this.zoom !== newZoom) {
-            let content = this.canvas.querySelector('.wrapper')
+            let content = this.canvas
             this.zoom = newZoom;
 
             let dx = center.x * (content.offsetWidth * delta);
@@ -108,7 +108,7 @@ export default class CanvasNavigator {
      * @param {Function} onZoomChange
      */
     activateZoom (e, onZoomChange) {
-        let content = this.canvas.querySelector('.wrapper');
+        let content = this.canvas;
 
         let delta = (e.wheelDelta > 1 ? 1 : -1) * 0.2;
         let width = content.offsetWidth * this.zoom;

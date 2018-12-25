@@ -11,16 +11,19 @@
         display: flex;
         height: 56px;
         align-items: center;
-        background-color: var(--ui-color-bg);
         padding: 0 20px;
+        background-color: rgb(71, 71, 71);
+        border-bottom: 2px solid rgb(29, 30, 32);
 
-        
+        &Dropdowns {
+
+        }
     }
 
     &-body {
         display: flex;
         flex: 1;
-        background-color: rgb(21, 26,36);
+        background-color: rgb(29, 30, 32);
     }
 
     &-canvas {
@@ -34,16 +37,20 @@
         padding: 20px;
         box-sizing: border-box;
         overflow: auto;
-        background-color: var(--ui-color-bg);
+        background-color: rgb(46, 47, 48);
+        border-left: 2px solid rgb(29, 30, 32);
     }
 
     button {
-        background-color: var(--ui-color-control);
+        -webkit-user-select: none;
+        background-image: linear-gradient(rgb(105, 105, 105), rgb(101, 101, 101));
         padding: 8px 16px;
         color: white;
         border-radius: 5px;
         border: none;
         cursor: pointer;
+        font-size: 14px;
         margin-right: 24px;
+        box-shadow: 0px 1px 0px rgba(0,0,0,.4), inset 0px 1px 0px rgba(255,255,255,.3), inset 0px 0px 3px rgba(255,255,255,.5);
     }
 }

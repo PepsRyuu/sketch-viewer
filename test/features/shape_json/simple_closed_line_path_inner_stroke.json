@@ -1,0 +1,81 @@
+ {
+    "_class": "shapePath",
+    "frame": {
+        "_class": "rect",
+        "do_objectID": "5FEEC30E-5FD3-45B9-8AFB-ED628F6783FC",
+        "constrainProportions": false,
+        "height": 100,
+        "width": 100,
+        "x": 0,
+        "y": 0
+    },
+    "style": {
+        "_class": "style",
+        "do_objectID": "3FCD3F86-9EFD-4171-BF7A-2905713B3643",
+        "borderOptions": {
+            "_class": "borderOptions",
+            "do_objectID": "C1F233FE-AADE-495A-ABBA-7691BACB229D",
+            "isEnabled": false,
+            "dashPattern": [],
+            "lineCapStyle": 1,
+            "lineJoinStyle": 1
+        },
+        "borders": [
+            {
+                "_class": "border",
+                "isEnabled": true,
+                "color": {
+                    "_class": "color",
+                    "alpha": 1,
+                    "blue": 0,
+                    "green": 0,
+                    "red": 0
+                },
+                "fillType": 0,
+                "position": 1,
+                "thickness": 5
+            }
+        ],
+        "endDecorationType": 0,
+        "miterLimit": 10,
+        "startDecorationType": 0
+    },
+    "booleanOperation": -1,
+    "path": {
+        "_class": "path",
+        "isClosed": true,
+        "pointRadiusBehaviour": 1,
+        "points": [
+            {
+                "_class": "curvePoint",
+                "cornerRadius": 0,
+                "curveFrom": "{0, 0}",
+                "curveMode": 1,
+                "curveTo": "{0, 0}",
+                "hasCurveFrom": false,
+                "hasCurveTo": false,
+                "point": "{0, 0}"
+            },
+            {
+                "_class": "curvePoint",
+                "cornerRadius": 0,
+                "curveFrom": "{1, 1}",
+                "curveMode": 1,
+                "curveTo": "{1, 1}",
+                "hasCurveFrom": false,
+                "hasCurveTo": false,
+                "point": "{1, 1}"
+            },
+            {
+                "_class": "curvePoint",
+                "cornerRadius": 0,
+                "curveFrom": "{0.25, 0.5}",
+                "curveMode": 1,
+                "curveTo": "{0.25, 0.5}",
+                "hasCurveFrom": false,
+                "hasCurveTo": false,
+                "point": "{0.25, 0.5}"
+            }
+        ]
+    }
+}

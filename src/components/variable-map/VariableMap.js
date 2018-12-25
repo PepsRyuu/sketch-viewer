@@ -1,6 +1,6 @@
 import { Component } from 'preact';
 import Portal from 'preact-portal';
-import Settings from '../../Settings';
+import Settings from '../../utils/Settings';
 import './VariableMap.less';
 
 export default class VariableMap extends Component {

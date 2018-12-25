@@ -1,0 +1,112 @@
+{
+    "_class": "shapeGroup",
+    "frame": {
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 100
+    },
+    "style": {
+        "fills": [{
+            "isEnabled": true,
+            "color": {
+                "alpha": 1,
+                "red": 1,
+                "green": 0,
+                "blue": 0
+            },
+            "fillType": 0
+        }]
+    },
+    "layers": [{
+        "_class": "rectangle",
+        "frame": {
+            "x": 10,
+            "y": 10,
+            "width": 20,
+            "height": 20
+        },
+        "booleanOperation": -1,
+        "points": [{
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }] 
+    },{
+        "_class": "rectangle",
+        "frame": {
+            "x": 15,
+            "y": 15,
+            "width": 10,
+            "height": 10
+        },
+        "booleanOperation": 1,
+        "points": [{
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }] 
+    }, {
+        "_class": "rectangle",
+        "frame": {
+            "x": 60,
+            "y": 60,
+            "width": 20,
+            "height": 20
+        },
+        "booleanOperation": 0,
+        "points": [{
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }] 
+    },{
+        "_class": "rectangle",
+        "frame": {
+            "x": 65,
+            "y": 65,
+            "width": 5,
+            "height": 5
+        },
+        "booleanOperation": 1,
+        "points": [{
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }] 
+    }, {
+        "_class": "rectangle",
+        "frame": {
+            "x": 70,
+            "y": 70,
+            "width": 5,
+            "height": 5
+        },
+        "booleanOperation": 1,
+        "points": [{
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }, {
+            "cornerRadius": 0
+        }] 
+    }]
+}

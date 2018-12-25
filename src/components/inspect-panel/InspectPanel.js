@@ -1,69 +1,58 @@
 import { Component } from 'preact';
 import './InspectPanel.less'
-import EventBus from '../../EventBus';
 import VariableMap from '../variable-map/VariableMap';
+
+let ATTRIBUTES_TO_SHOW = ['width', 'height', 'rotation', 'opacity', 'fill', 'border', 'innerShadow', 'shadow', 'strings', 'background-color'];
+
+function formatAttribute (key, value) {
+    function outputValue (key, value) {
+        if (Array.isArray(value)) {
+            return (
+                <div>
+                    <h3>{key}</h3>
+                    <section>
+                        {value.map((v, i) => outputValue(i, v))}
+                    </section>
+                </div>
+                
+            );
+        }
+
+        if (typeof value === 'object') {
+            return (
+                <div>
+                    <h3>{key}</h3>
+                    <section>
+                        {Object.keys(value).map(k => outputValue(k, value[k]))}
+                    </section>
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                <h3>{key}</h3>
+                <p>{value}</p>
+                {key === 'color' && <div style={`height: 5px; margin-bottom: 8px; background-color: ${value}`} />}
+            </div>
+        );
+    }
+
+    return outputValue(key, value);
+}
 
 export default class InspectPanel extends Component {
         
-    constructor () {
-        super ();
-
-        this.state = {
-            properties: []
-        }
-    }
-
-    componentDidMount () {
-        EventBus.subscribe('inspect-element', this.onInspectElement.bind(this));
-    }
-
-    onInspectElement ({ element, layer}) {
-        let properties = [];
-
-        if (layer.frame) {
-            properties.push({title: 'width', value: layer.frame.width});
-            properties.push({title: 'height', value: layer.frame.height});
-        }
-
-        Object.keys(layer.__resolved).forEach(type => {
-            let obj = layer.__resolved[type];
-
-            for (let key in obj) {
-                let value = obj[key];
-                if (value !== undefined && value !== '') {
-                    let property = {
-                        title: key,
-                        value: value
-                    };
-
-                    let variable = VariableMap.GetVariableMapping(key, value);
-                    if (variable) {
-                        property.variable = <p>{'Variable: ' + variable}</p>
-                    }
-
-                    if (value.toString().indexOf('linear-gradient') === 0 || value.toString().indexOf('rgba(') === 0) {
-                        property.extra = <div style={`height: 10px; background: ${value};`}/>
-                    }
-
-                    properties.push(property);
-                }
-            }
-        });
-
-        this.setState({ properties });
-    }
-
     render () {
         return (
             <div class="InspectPanel">
-                {this.state.properties.map(property => (
-                    <div class="InspectPanel-property">
-                        <h3>{property.title}</h3>
-                        <p>{property.value}</p>
-                        {property.variable || null}
-                        {property.extra || null}
-                    </div>
-                ))}
+                {this.props.node && Object.keys(this.props.node.attributes).filter(key => ATTRIBUTES_TO_SHOW.indexOf(key) > -1).map(n => {
+                    return (
+                        <div class="InspectPanel-property">
+                            {formatAttribute(n, this.props.node.attributes[n])}
+                        </div>
+                    );
+                })}
             </div>
         )
     }

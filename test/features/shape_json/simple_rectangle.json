@@ -1,0 +1,31 @@
+{
+    "_class": "rectangle",
+    "frame": {
+        "x": 0,
+        "y": 0,
+        "width": 20,
+        "height": 20
+    },
+    "style": {
+        "fills": [{
+            "isEnabled": true,
+            "color": {
+                "alpha": 1,
+                "red": 1,
+                "green": 1,
+                "blue": 0
+            },
+            "fillType": 0
+        }]
+    },
+    "booleanOperation": -1,
+    "points": [{
+        "cornerRadius": 0
+    }, {
+        "cornerRadius": 0
+    }, {
+        "cornerRadius": 0
+    }, {
+        "cornerRadius": 0
+    }]
+}

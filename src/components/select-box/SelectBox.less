@@ -1,14 +1,53 @@
 .SelectBox {
-    background-color: var(--ui-color-control);
-    border: none;
+    padding: 8px 32px 8px 16px;
     color: white;
-    padding: 8px 16px;
-    cursor: pointer;
+    border-radius: 5px;
     display: inline-block;
-    min-width: 200px;
-    margin-right: 30px;
+    border: 2px solid rgb(87, 87, 87);
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 24px;
+    background-color: rgb(70, 70, 70);
+    position: relative;
+    -webkit-user-select: none;
+    width: 250px;
+
+    &::after {
+        content: '▼';
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 50%;
+        color: #999;
+        right: 6px;
+        transform: translateY(-50%) scaleY(0.5);
+    }
 }
 
 .DropdownInterface {
-    color: black;
+    color: white;
+    font-size: 14px;
+    animation: Dropdown 0.3s forwards;
+    border-radius: 5px;
+    width: 250px;
+
+    .item.focused {
+        background-color: #9D9D9D;
+    }
+
+    .item {
+        background-color: #888888;
+    }
+}
+
+@keyframes Dropdown {
+    0% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(5px);
+    }
 }

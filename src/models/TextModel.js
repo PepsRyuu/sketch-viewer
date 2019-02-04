@@ -1,9 +1,13 @@
 import { getDOMColor, withProperty, getProperty } from '../utils/index';
 import { TextWeights, TextAlignments } from '../utils/constants';
-import TextModelNormalizer from './TextModelNormalizer';
 
-function getFontStyle (attrs) {
+export function getFontStyle (attrs) {
     let { name, size } = attrs.MSAttributedStringFontAttribute.attributes;
+
+    // TODO: NSCTFontUIUsageAttribute
+    if (!name) {
+        name = 'Arial-Regular';
+    }
 
     let parts = name.split('-');
     let family = parts[0] + ', ' + parts[0].replace(/([A-Z](?:[a-z]))/g, ' $1').trim();
@@ -32,8 +36,7 @@ function getDecoratorStyle (attrs) {
 }
 
 function getAlignmentAndSpacing (attrs) {
-    // let lineHeight = '1.5';
-    let lineHeight = '1';
+    let lineHeight = 'normal';
 
     if (attrs.paragraphStyle) {
         if (attrs.paragraphStyle._class === 'paragraphStyle') {
@@ -44,7 +47,6 @@ function getAlignmentAndSpacing (attrs) {
             }
         }
     }
-
 
     return {
         'text-align': TextAlignments[attrs.paragraphStyle.alignment] || 'left',
@@ -64,18 +66,11 @@ function getTextTransform (attrs) {
     };
 }
 
-function normalize (layer) {
-    if (layer.attributedString.archivedAttributedString) {
-        return TextModelNormalizer(layer);
-    }
-
-    return layer.attributedString;
-}
-
 export default function TextModel (layer) {
-    let { string, attributes } = normalize(layer);
+    let { string, attributes } = layer.attributedString;
 
     return {
+        'text-wrap': layer.textBehaviour === 0? 'pre' : 'pre-wrap',
         'strings': attributes.map(attr => {
             return {
                 value: string.substring(attr.location, attr.location + attr.length).replace(/\u2028/g, '\n'),

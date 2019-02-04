@@ -12,6 +12,7 @@ const ELEMENT_MAP = {
     'text': TextElement,
     'rectangle': ShapeElement,
     'oval': ShapeElement,
+    'triangle': ShapeElement,
     'shapePath': ShapeElement,
     'bitmap': BitmapElement,
     'shapeGroup': ShapeGroupElement
@@ -49,7 +50,7 @@ function renderNode (node) {
 
     BaseStyler(node, el);
 
-    if (node.children.length > 0) {
+    if (el.nodeName !== 'svg' && node.children.length > 0) {
        el.children = node.children.map(n => renderNode.call(this, n)); 
     }
 

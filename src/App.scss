@@ -15,8 +15,9 @@
         background-color: rgb(71, 71, 71);
         border-bottom: 2px solid rgb(29, 30, 32);
 
-        &Dropdowns {
-
+        > * {
+            display: flex;
+            align-items: center;
         }
     }
 

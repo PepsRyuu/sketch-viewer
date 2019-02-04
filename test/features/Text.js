@@ -1,5 +1,5 @@
-let ElementText = require('../../src/components/renderer/elements/TextElement').default;
-let ArtboardResolver = require('../../src/resolvers/ArtboardResolver').default;
+import ElementText from '../../src/components/renderer/elements/TextElement';
+import ArtboardResolver from '../../src/resolvers/ArtboardResolver';
 
 let LayerFrame = (x, y, w, h) => ({
     _class: 'text',

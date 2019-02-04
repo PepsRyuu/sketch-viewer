@@ -1,6 +1,5 @@
 import { Component } from 'preact';
-import './InspectPanel.less'
-import VariableMap from '../variable-map/VariableMap';
+import './InspectPanel.scss'
 
 let ATTRIBUTES_TO_SHOW = ['width', 'height', 'rotation', 'opacity', 'fill', 'border', 'innerShadow', 'shadow', 'strings', 'background-color'];
 

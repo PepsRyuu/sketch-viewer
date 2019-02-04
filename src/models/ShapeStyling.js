@@ -6,14 +6,12 @@ let gradientIndex = 0;
 let patternIndex = 0;
 let borderClipIndex = 0;
 
-
-export function getFill (layer) {
+function getFillImpl (entries) {
     let output = [];
+    let getBlendMode = f => BlendingMode[f.contextSettings? f.contextSettings.blendMode : 0];
 
-    let fills = (layer.style && layer.style.fills) || [];
-    fills = fills.filter(f => f.isEnabled);
 
-    if (fills.length === 0) {
+    if (entries.length === 0) {
         output.push({
             type: 'color',
             color: 'rgba(1, 1, 1, 0)',
@@ -21,10 +19,8 @@ export function getFill (layer) {
         });
     }
 
-    let getBlendMode = f => BlendingMode[f.contextSettings? f.contextSettings.blendMode : 0];
-
-    if (fills.length >= 1) {
-        fills.forEach(f => {
+    if (entries.length >= 1) {
+        entries.forEach(f => {
             if (f.fillType === 0) {
                 output.push({
                     type: 'color',
@@ -60,10 +56,17 @@ export function getFill (layer) {
     return output;
 }
 
+export function getFill (layer) {
+    let fills = (layer.style && layer.style.fills) || [];
+    fills = fills.filter(f => f.isEnabled);
+    return getFillImpl(fills);
+}
+
 export function getBorder (layer) {
 
     let borders = (layer.style && layer.style.borders) || [];
     borders = borders.filter(b => b.isEnabled);
+    
 
     if (borders.length > 0) {
         // support for single border only currently
@@ -73,7 +76,7 @@ export function getBorder (layer) {
 
         return {
             type: dashed? 'dashed' : 'solid',
-            color: getDOMColor(b.color),
+            fill: getFillImpl([b]),
             width: b.thickness,
             dasharray: dashed? opts.dashPattern[0] : 0,
             position: b.position === 1? 'inner' : 'normal'

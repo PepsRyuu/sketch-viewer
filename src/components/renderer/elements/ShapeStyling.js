@@ -100,19 +100,25 @@ export function getFill (node) {
 
     return { 
         props: { fill: css }, 
-        output
+        output,
+        blend: fills.filter(f => f.blend !== 'normal').length > 0? 'overlay' : 'normal'
     };
 }
 
 export function getBorder (node, els = []) {
-
     if (node.border) {
         let props = {};
         let output = [];
         let border = node.border;
+        let fill = getFill({
+            ...node,
+            fill: node.border.fill
+        });
 
-        props['stroke'] = border.color;
+        props['stroke'] = fill.props.fill;
         props['stroke-width'] = border.width;
+
+        output = output.concat(fill.output);
 
         if (border.type === 'dashed') {
             props['stroke-dasharray'] = border.dasharray;

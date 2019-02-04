@@ -1,7 +1,7 @@
 import { Component } from 'preact';
 import DropdownInterface from 'dropdown-interface';
 import 'dropdown-interface/dist/DropdownInterface.css';
-import './SelectBox.less';
+import './SelectBox.scss';
 
 /**
  * Simple select box wrapping dropdown-interface.

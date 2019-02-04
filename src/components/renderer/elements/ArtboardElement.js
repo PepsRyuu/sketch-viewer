@@ -3,7 +3,8 @@ export default function ArtboardElement (node) {
         <div
             style={{
                 position: 'relative',
-                backgroundColor: node.attributes['background-color']
+                backgroundColor: node.attributes['background-color'],
+                overflow: 'hidden'
             }}
         />
     );

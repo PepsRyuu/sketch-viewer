@@ -8,7 +8,7 @@ If you find any issues, please forward a sample Sketch file with the expected ou
 This application is intended for developers. 
 There's no plans to make this an editor for Sketch files. 
 
-![ScreenShot](images/demo.png)
+![ScreenShot](docs/demo.png)
 
 ## Motiviation
 

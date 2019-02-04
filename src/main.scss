@@ -1,0 +1,33 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: white;
+
+    --ui-color-bg: rgb(31, 37, 50);
+    --ui-color-control: rgb(48, 60, 80);
+}
+
+.scrollbar {
+    overflow: auto;
+
+    &::-webkit-scrollbar {   
+        width: 8px;   
+        height: 8px; 
+    }
+
+    &::-webkit-scrollbar-track {   
+        background-color: #555;   
+        border-radius: 8px; 
+    } 
+
+    &::-webkit-scrollbar-thumb {   
+        border-radius: 8px;   
+        background-color: #aaa; 
+    }
+
+    &::-webkit-scrollbar-corner {
+        background-color: transparent;
+    }
+}

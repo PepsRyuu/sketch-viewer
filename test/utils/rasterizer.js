@@ -1,5 +1,5 @@
-let { render } = require('preact');
-let fs = require('fs');
+let { render } = global.require('preact');
+let fs = global.require('fs');
 
 function SVGtoImage (node) {
     return new Promise (resolve => {

@@ -1,6 +1,6 @@
 import { createShapePath } from './ShapeGenerator';
 import { getFill, getBorder, getInnerShadow, getShadow } from './ShapeStyling';
-import paper from 'paper';
+import { paper } from '../../../utils/Node';
 
 let canvas = document.createElement('canvas');
 canvas.width = 1920;
@@ -95,23 +95,48 @@ export default function ShapeGroupElement (node) {
             prevOp = op;
         });
 
-        return paper_group;
+        return Array.from(paper_group.exportSVG().children)[0];
     }
 
-    let group = generateShapeGroup(node);
-    let els = Array.from(group.exportSVG().children).map(el => <path d={el.getAttribute('d')} />);
+    let path_segments = (function () {
+        let output = [], tmp = [];
 
+        node.children.forEach((child, index) => {
+            if (child.attributes.booleanOperation === 'none') {
+                if (tmp.length > 0) {
+                    output.push(tmp);
+                }
 
+                tmp = [];
+            }
+
+            tmp.push(child);
+
+            if (index === node.children.length - 1) {
+                output.push(tmp);
+            }
+        });
+
+        return output;
+    })();
+
+    let paths = path_segments.map(ps => {
+        return generateShapeGroup({ children: ps }).getAttribute('d');
+    });
+
+    let el = [<path d={paths.join(' ')}/>];
     let fill = getFill(node.attributes);
-    let border = getBorder(node.attributes, els);
-    let innerShadow = getInnerShadow(node.attributes, els, fill);
-    let shadow = getShadow(node.attributes, els);
+    let border = getBorder(node.attributes, el);
+    let innerShadow = getInnerShadow(node.attributes, el, fill);
+    let shadow = getShadow(node.attributes, el);
 
     // Props to be applied to the SVG.
     let props = {
         width: node.attributes.width,
         height: node.attributes.height,
-        overflow: 'visible'
+        overflow: 'visible',
+        'fill-rule': 'evenodd',
+        style: { 'mix-blend-mode': fill.blend }
     };
 
     props = {
@@ -121,9 +146,7 @@ export default function ShapeGroupElement (node) {
         ...innerShadow.props,
         ...shadow.props
     };
-
-    node.children = [];
-
+    
     return (
         <svg {...props}>
             <defs>
@@ -132,7 +155,7 @@ export default function ShapeGroupElement (node) {
                 {innerShadow.output}
             </defs>
             <g>
-                {els}
+                {el}
             </g>
         </svg>
     );

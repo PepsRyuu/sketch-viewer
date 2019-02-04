@@ -49,3 +49,13 @@ export const BooleanOperations = {
     '2': 'intersect',
     '3': 'difference'
 };
+
+export const ResizeConstraints = {
+    NONE: 0b00111111,
+    TOP: 0b00011111,
+    RIGHT: 0b00111110,
+    BOTTOM: 0b00110111,
+    LEFT: 0b00111011,
+    WIDTH: 0b00111101,
+    HEIGHT: 0b00101111
+};

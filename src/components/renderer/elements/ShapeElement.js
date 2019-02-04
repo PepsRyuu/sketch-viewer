@@ -17,7 +17,8 @@ export default function ShapeElement (node) {
         ...fill.props,
         ...border.props,
         ...innerShadow.props,
-        ...shadow.props
+        ...shadow.props,
+        style: { 'mix-blend-mode': fill.blend }
     };
 
     return (

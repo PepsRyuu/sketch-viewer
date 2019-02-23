@@ -1,3 +1,5 @@
 node_modules
 __temp__
 __notes__
+dist
+package-lock.json

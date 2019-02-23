@@ -1,12 +1,11 @@
 import { Component } from 'preact';
 import InspectPanel from './components/inspect-panel/InspectPanel';
-// import HTMLCanvas from './components/html-canvas/HTMLCanvas';
 import SelectBox from './components/select-box/SelectBox';
 import FileResolver from './resolvers/FileResolver';
 import ArtboardResolver from './resolvers/ArtboardResolver';
 import { OpenJSON } from './utils/index';
 import Renderer from './components/renderer/Renderer';
-import './App.less';
+import './App.scss';
 
 /**
  * Main app class.
@@ -158,7 +157,7 @@ export default class App extends Component {
                             <Renderer data={this.state.resolvedArtboard} onNodeClick={this.onNodeClick}/>
                         )}
                     </div>
-                    <div class="App-inspect">
+                    <div class="App-inspect scrollbar">
                         <InspectPanel node={this.state.clickedNode}/>
                     </div>
                 </div>

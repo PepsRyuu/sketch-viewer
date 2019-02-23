@@ -1,11 +1,19 @@
-import bplist from 'bplist-parser';
+import { plist } from '../utils/Node';
 
+/**
+ * Converts Mac OS binary property list objects
+ * into human-readable JavaScript objects.
+ *
+ * @method PListResolver
+ * @param {String} encodedArchive
+ * @return {Object}
+ */
 export default function PListResolver (encodedArchive) {
     let output = {};
 
     // Base64 to Object Archive
     let buffer = Buffer.from(encodedArchive, 'base64');
-    let archive = bplist.parseBuffer(buffer)[0];
+    let archive = plist.parseBuffer(buffer)[0];
     let { $objects, $top } = archive;
 
     function getByUID (uid) {

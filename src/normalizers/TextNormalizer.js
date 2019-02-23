@@ -64,34 +64,33 @@ function getTransform (textStyle) {
     return textStyle.MSAttributedStringTextTransformAttribute;
 }
 
-/**
- * Sketch Text class.
- *
- * @method ElementText
- */
-export default function TextModelNormalizer (layer) {
+export default function TextModelNormalizer (layer) { 
+    let result;
+
     if (!layer.attributedString.archivedAttributedString) {
-        return layer.attributedString;
-    }
+        result = layer.attributedString;
+    } else {
+        let attributedString = PListResolver(layer.attributedString.archivedAttributedString._archive);
+        let textStyle = layer.style.textStyle.encodedAttributes;
 
-    let attributedString = PListResolver(layer.attributedString.archivedAttributedString._archive);
-    let textStyle = layer.style.textStyle.encodedAttributes;
-
-    return {
-        string: attributedString.NSString,
-        attributes: [{
-            location: 0,
-            length: attributedString.NSString.length,
-            attributes: {
-                MSAttributedStringFontAttribute: getFont(textStyle),
-                MSAttributedStringColorAttribute: getColor(textStyle),
-                MSAttributedStringTextTransformAttribute: getTransform(textStyle),
-                underlineStyle: 0,
-                paragraphStyle: {
-                    _class: 'paragraphStyle',
-                    ...getParagraphStyle(textStyle)
+        result = {
+            string: attributedString.NSString,
+            attributes: [{
+                location: 0,
+                length: attributedString.NSString.length,
+                attributes: {
+                    MSAttributedStringFontAttribute: getFont(textStyle),
+                    MSAttributedStringColorAttribute: getColor(textStyle),
+                    MSAttributedStringTextTransformAttribute: getTransform(textStyle),
+                    underlineStyle: 0,
+                    paragraphStyle: {
+                        _class: 'paragraphStyle',
+                        ...getParagraphStyle(textStyle)
+                    }
                 }
-            }
-        }]
+            }]
+        }
     }
+
+    layer.attributedString = result;
 }

@@ -1,6 +1,4 @@
-import { shell } from 'electron';
-import fs from 'fs';
-import path from 'path';
+import { electron, fs, path } from './Node';
 
 export function OpenJSON (file_json) {
     let json = JSON.stringify(file_json.data, null, 4);
@@ -13,7 +11,7 @@ export function OpenJSON (file_json) {
     let filepath = '__temp__/' + file_json.id + '.json';
     fs.writeFileSync(filepath, json);
 
-    shell.openItem(path.resolve(process.cwd(), filepath));   
+    electron.shell.openItem(path.resolve(process.cwd(), filepath));   
 }
 
 /**

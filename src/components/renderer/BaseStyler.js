@@ -23,4 +23,8 @@ export default function BaseStyler (node, el) {
     if (!attrs.visible) {
         el.attributes.style.display = 'none';
     }
+
+    if (attrs['background-color']) {
+        el.attributes.style.backgroundColor = attrs['background-color'];
+    }
 }

@@ -10,6 +10,7 @@ const CLASS_MODELS = {
     'text': TextModel,
     'rectangle': ShapeModel,
     'oval': ShapeModel,
+    'triangle': ShapeModel,
     'shapePath': ShapeModel,
     'bitmap': BitmapModel,
     'shapeGroup': ShapeGroupModel

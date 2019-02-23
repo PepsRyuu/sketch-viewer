@@ -26,7 +26,13 @@ app.on('ready', function() {
 
     mainWindow.setMenu(null);
 
-    let url = 'file://' + __dirname + '/index.html';
+    let url;
+    if (process.env.NODE_ENV === 'development') {
+        url = 'http://localhost:8080/index.html'; // needed for HMR to work
+    } else {
+        url = 'file://' + __dirname + '/dist/index.html'
+    }
+ 
     mainWindow.loadURL(url);
 
     mainWindow.on('closed', function() {

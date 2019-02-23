@@ -2,7 +2,7 @@ import { Component } from 'preact';
 import Navigator from './Navigator';
 import RendererOutput from './RendererOutput';
 import RendererMeasurer from './RendererMeasurer';
-import './Renderer.less';
+import './Renderer.scss';
 
 function applyParents (parent, node) {
     node.parent = parent;

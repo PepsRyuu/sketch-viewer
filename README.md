@@ -42,5 +42,10 @@ While there is services like Invision out there, there's a few problems with it.
 Install the font globally on your system.
 
 ## Known Issues
-* Symbol Overrides not implemented.
+* Symbol overrides are not perfect yet.
+* Most shape paths should render fine, but there's some more obscure ones that won't render correctly yet.
+* Sometimes text elements may wrap to the next line when they shouldn't.
+* Shadows not fully working.
+* Blur not available.
+* Inspector still needs some work (measurer, property panel).
 

@@ -1,5 +1,5 @@
 let node_resolve = require('rollup-plugin-node-resolve');
-let buble = require('rollup-plugin-buble');
+let babel = require('rollup-plugin-babel');
 let css = require('rollup-plugin-hot-css');
 let glob = require('rollup-plugin-glob-import');
 
@@ -12,7 +12,7 @@ let scss = (code, id) => {
 };
 
 let config = {
-    input: './src/main.js',
+    input: process.env.MAIN || './src/main.js',
     output: {
         dir: './dist',
         format: 'umd',
@@ -26,10 +26,7 @@ let config = {
             hot: process.env.NODE_ENV === 'development',
             transform: scss
         }),
-        buble({
-            jsx: 'h',
-            objectAssign: 'Object.assign'
-        }),
+        babel(),
         node_resolve({
         	jsnext: true
         })

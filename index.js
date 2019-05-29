@@ -21,7 +21,10 @@ app.on('ready', function() {
         width: width, 
         height: height,
         title: 'Sketch Viewer',
-        webPreferences: { experimentalFeatures: true }
+        webPreferences: { 
+            experimentalFeatures: true,
+            nodeIntegration: true
+        }
     });
 
     mainWindow.setMenu(null);

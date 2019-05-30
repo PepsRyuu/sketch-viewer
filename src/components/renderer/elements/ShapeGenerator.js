@@ -7,7 +7,16 @@ function generateShapePath (node, offset) {
         return (point[0] * _w + _x) + ' ' + (point[1] * _h + _y);
     }
 
-    let points = node.path.points;
+    let points = JSON.parse(JSON.stringify(node.path.points));
+
+    points.forEach((p, i) => {
+        if (p.hasCurveTo) {
+            let next = i === points.length - 1? 0 : i + 1;
+            points[next].hasCurveFrom = true;
+        }
+    });
+
+
     let start = parsePoint(points[0].point);
     let d = `M ${start} `;
 
@@ -16,7 +25,7 @@ function generateShapePath (node, offset) {
         let prev = i === 0? points[points.length - 1] : points[i - 1];
         let p = parsePoint(curr.point);
 
-        if (curr.hasCurveTo) {
+        if (curr.hasCurveFrom || curr.hasCurveTo) {
             let c1 = parsePoint(prev.curveFrom);
             let c2 = parsePoint(curr.curveTo);
 
@@ -30,7 +39,7 @@ function generateShapePath (node, offset) {
     if (node.path.closed) {
         let p = parsePoint(points[0].point);
 
-        if (points[0].hasCurveTo) {
+        if (points[0].hasCurveFrom || points[0].hasCurveTo) {
             
             let c1 = parsePoint(points[points.length - 1].curveFrom);
             let c2 = parsePoint(points[0].curveTo);

@@ -92,5 +92,10 @@ export default function TextModelNormalizer (layer) {
         }
     }
 
+    // Vertical alignment is in textStyle but not attributes
+    result.attributes.forEach(s => {
+        s.attributes.verticalAlignment = layer.style.textStyle.verticalAlignment;
+    });
+
     layer.attributedString = result;
 }

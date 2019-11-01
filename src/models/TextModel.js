@@ -1,5 +1,5 @@
 import { getDOMColor, withProperty, getProperty } from '../utils/index';
-import { TextWeights, TextAlignments } from '../utils/constants';
+import { TextWeights, TextAlignments, VerticalAlignments } from '../utils/constants';
 
 export function getFontStyle (attrs) {
     let { name, size } = attrs.MSAttributedStringFontAttribute.attributes;
@@ -49,9 +49,10 @@ function getAlignmentAndSpacing (attrs) {
     }
 
     return {
-        'text-align': TextAlignments[attrs.paragraphStyle.alignment] || 'left',
-        'line-height': lineHeight
-    }
+        'text-align': TextAlignments[attrs.paragraphStyle && attrs.paragraphStyle.alignment] || 'left',
+        'line-height': lineHeight,
+        'vertical-align': attrs.verticalAlignment !== undefined? VerticalAlignments[attrs.verticalAlignment] : 'middle'
+    };
 }
 
 function getTextTransform (attrs) {

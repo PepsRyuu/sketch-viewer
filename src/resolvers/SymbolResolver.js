@@ -39,9 +39,9 @@ function getSymbolMasterImpl ( layers, id) {
 }
 
 function getSymbolMaster (id) {
-    for (let key in current.foreign.foreignSymbols) {
+    for (let key in current.foreign.symbols) {
         if (key === id) {
-            return current.foreign.foreignSymbols[key];
+            return current.foreign.symbols[key];
         }
     }
 
@@ -112,11 +112,11 @@ function applyOverrides ( layer) {
                 }
 
                 if (override_type === 'layerStyle') {
-                    target_layer.style = current.foreign.foreignLayerStyles[override.value];
+                    target_layer.style = current.foreign.layerStyles[override.value];
                 }
 
                 if (override_type === 'textStyle') {
-                    target_layer.textStyle = current.foreign.foreignTextStyles[override.value];
+                    target_layer.textStyle = current.foreign.textStyles[override.value];
                 }
             }
         });

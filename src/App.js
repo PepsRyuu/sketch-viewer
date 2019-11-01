@@ -7,6 +7,9 @@ import { OpenJSON } from './utils/index';
 import Renderer from './components/renderer/Renderer';
 import './App.scss';
 
+// Stops input field from sometimes not firing onchange
+let file_input;
+
 /**
  * Main app class.
  *
@@ -32,10 +35,10 @@ export default class App extends Component {
      * @method loadFile
      */
     loadFile () {
-        let el = document.createElement('input');
-        el.setAttribute('type', 'file');
-        el.onchange = this.onFileLoad.bind(this);
-        el.click();
+        file_input = document.createElement('input');
+        file_input.setAttribute('type', 'file');
+        file_input.onchange = this.onFileLoad.bind(this);
+        file_input.click();
     }
 
     /**

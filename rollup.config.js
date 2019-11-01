@@ -15,7 +15,7 @@ let config = {
     input: process.env.MAIN || './src/main.js',
     output: {
         dir: './dist',
-        format: 'umd',
+        format: 'iife',
         assetFileNames: '[name][extname]',
         entryFileNames: '[name].js'
     },

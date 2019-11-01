@@ -101,6 +101,24 @@ export default function FileResolver (filename) {
             });
         }
 
+        if (docdata.layerStyles) {
+            docdata.layerStyles.objects.forEach(obj => {
+                foreign.layerStyles[obj.do_objectID] = obj.value;
+            });
+        }
+
+        if (docdata.textStyles) {
+            docdata.textStyles.objects.forEach(obj => {
+                foreign.textStyles[obj.do_objectID] = obj.value;
+            });
+        }
+
+        if (docdata.symbols) {
+            docdata.symbols.objects.forEach(obj => {
+                foreign.symbols[obj.do_objectID] = obj.value;
+            });
+        }
+
         // Tidy up the data and return it
         NormalizerResolver(output.pages);
         SymbolResolver(output.pages, foreign);

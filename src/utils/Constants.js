@@ -59,3 +59,10 @@ export const ResizeConstraints = {
     WIDTH: 0b00111101,
     HEIGHT: 0b00101111
 };
+
+// TODO: Are these accurate?
+export const VerticalAlignments = {
+    '0': 'top',
+    '1': 'middle',
+    '2': 'bottom'
+};

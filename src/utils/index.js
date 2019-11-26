@@ -1,39 +1,23 @@
-import { electron, fs, path } from './Node';
+import { electron, fs, path, jszip } from './Node';
 
-export function OpenJSON (file_json) {
-    let json = JSON.stringify(file_json.data, null, 4);
+export function OpenJSON (file_name, file_json) {
+    let json = JSON.stringify(file_json, null, 4);
     let uri = 'data:application/json;base64,' + Buffer.from(json).toString('base64');
 
     if (!fs.existsSync('__temp__')) {
         fs.mkdirSync('__temp__');
     }
 
-    let filepath = '__temp__/' + file_json.id + '.json';
+    let filepath = '__temp__/' + file_name + '.json';
     fs.writeFileSync(filepath, json);
 
     electron.shell.openItem(path.resolve(process.cwd(), filepath));   
 }
 
-/**
- * Takes Sketch number set format and returns them parsed as floats.
- *
- * @method parseNumberSet
- * @param {String} input
- * @return {Array<Float>}
- */
-export function parseNumberSet (input) {
-    return input.replace(/\{|\}/g, '').split(', ').map(parseFloat);
-}
-
-/**
- * Convert Sketch RGBA structure to DOM color string.
- *
- * @method getDOMColor
- * @param {Object} color
- * @return {String}
- */
-export function getDOMColor (color) {
-    return `rgba(${Math.floor(255 * color.red)}, ${Math.floor(255 * color.green)}, ${Math.floor(255 * color.blue)}, ${color.alpha})`;
+export function getDOMColorXD (color) {
+    let c = color.value;
+    let a = color.alpha !== undefined? color.alpha : 1;
+    return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`
 }
 
 export function withProperty (layer, path, callback) {
@@ -56,7 +40,11 @@ export function getImageData (ref) {
         }
     }
 
-    return `data:image/${extension.slice(1)};base64,${data}`;
+    if (data && extension) {
+        return `data:image/${extension.slice(1)};base64,${data}`;
+    } else {
+        return `data:image/svg+xml;utf8,<svg></svg>`;
+    }
 }
 
 export function getProperty (layer, path) {
@@ -79,4 +67,25 @@ export function getProperty (layer, path) {
             break;
         }
     } 
+}
+
+export function LoadZipFile (filename) {
+    return new Promise(resolve => {
+        let reader = new FileReader();
+        reader.onload = (e) => {
+            jszip.loadAsync(e.target.result).then(zip => {
+                resolve({
+                    files: zip.files,
+                    loadJSON: async function (name) {
+                        return JSON.parse(await zip.files[name].async('text'));
+                    },
+
+                    loadImage: async function (name) {
+                        return await zip.files[name].async('base64');
+                    }
+                })
+            });
+        };
+        reader.readAsArrayBuffer(filename);
+    });
 }

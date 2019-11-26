@@ -21,7 +21,8 @@ export default function TextElement (node) {
             'justify-content': talignToFlex(node.attributes.strings[0].attributes['text-align']),
             'white-space': node.attributes['text-wrap'],
             'display': 'flex',
-            'align-items': valignToFlex(node.attributes.strings[0].attributes['vertical-align'])
+            'align-items': valignToFlex(node.attributes.strings[0].attributes['vertical-align']),
+            'flex-wrap': 'wrap'
         }}>
             {node.attributes.strings.map(s => {
                 return (

@@ -37,7 +37,7 @@ function getDecoratorStyle (attrs) {
 
 function getAlignmentAndSpacing (attrs, layer) {
     let lineHeight = 'normal';
-
+    
     if (attrs.paragraphStyle) {
         if (attrs.paragraphStyle._class === 'paragraphStyle') {
             if (attrs.paragraphStyle.minimumLineHeight !== undefined) {
@@ -45,13 +45,6 @@ function getAlignmentAndSpacing (attrs, layer) {
             } else if (attrs.paragraphStyle.paragraphSpacing) {
                 lineHeight = (1 + attrs.paragraphStyle.paragraphSpacing) + 'em';
             }
-        }
-    }
-        
-    if (layer.glyphBounds) {
-        let bounds = parseNumberSet(layer.glyphBounds);
-        if (attrs.paragraphStyle.minimumLineHeight !== undefined) {
-            lineHeight = Math.min(bounds[3], attrs.paragraphStyle.minimumLineHeight) + 'px';
         }
     }
 
@@ -92,17 +85,25 @@ export default function TextModel (layer) {
 
     let offsetY = 0;
 
-    // Move multiline paragraphs upwards so that the bounding box
-    // begins exactly where the text begins with no added padding
-    // due to line-height.
-    if (layer.glyphBounds) {
-        // Multi-line adjustment
+    // perfect
+    //  bounds 14 line height 24 font-size 16 tb 0 lb 1 --> using line height, but normal also works 
+    //  bounds 22 line height none font-size 21, tb 1, lb 2 --> uses normal line height 
+    //  bounds 177 line height 80, font-size 16, tb 2, lb 2 --> using line height
+
+    // too high:
+    //   bounds 12, line height 21, font-size 14px tb 0 lb 0 ==> glyph tranlsation
+    //   bounds 15, line height 27, font-size 18px tb 1 lb 0 --> glyph translation
+
+    // too low:
+    //   bounds 10 line height 21 font-size 12px tb 1 lb 1 -- normal line height works
+    if (layer.glyphBounds && layer.lineSpacingBehaviour === 0 && strings[0].attributes['line-height'].endsWith('px')) {
         let bounds = parseNumberSet(layer.glyphBounds);
-        let lineHeight = parseInt(strings[0].attributes['line-height']);
-        let fontSize = parseInt(strings[0].attributes['font-size']);
-        if (bounds[3] > lineHeight && layer.lineSpacingBehaviour === 1) {
-            offsetY = -(lineHeight - fontSize) / 2 + 'px';
-        }
+        offsetY = bounds[1] + 'px';
+        strings.forEach(s => {
+            if (bounds[3] < parseInt(strings[0].attributes['line-height'])) {
+                s.attributes['line-height'] = bounds[3] + 'px';
+            }
+        });
     }
 
     return {

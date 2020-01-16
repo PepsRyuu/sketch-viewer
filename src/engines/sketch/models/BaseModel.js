@@ -13,25 +13,6 @@ export default function BaseModel (layer, parent) {
 
     let { x, y, width, height } = layer.frame;
 
-    // TODO: No clue what's happening here.
-    // Some text need glyph bounds added, others don't.
-    // These conditions are just random guesses that get most
-    // cases I've encountered working. Still breaks a couple though.
-    // The JSON doesn't provide any differences so must be something I'm missing.
-    if (layer.glyphBounds && layer.textBehaviour === 0) {
-        let bounds = parseNumberSet(layer.glyphBounds);
-
-        if (layer.attributedString.attributes[0].attributes.paragraphStyle.alignment !== 2) {
-            layer.frame.__text_x = x;
-            x += bounds[0];
-        }
-
-        if (layer.attributedString.attributes[0].attributes.paragraphStyle.minimumLineHeight !== undefined) {
-            layer.frame.__text_y = y;
-            y += bounds[1];
-        }
-    }
-
     return {
         'visible': layer.isVisible,
         'x': x,

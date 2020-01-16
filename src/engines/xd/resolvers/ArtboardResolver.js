@@ -66,7 +66,5 @@ export default function ArtboardResolver (data) {
         layerToModel(output, null, data.children[0]);
     }
 
-    console.log(output);
-
     return output;
 }

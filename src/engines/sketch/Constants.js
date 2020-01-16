@@ -1,8 +1,9 @@
 export const TextAlignments = {
+    0: 'left',
     1: 'right',
     2: 'center',
     3: 'justify',
-    4: 'left'
+    4: 'left' // default alignment
 };
 
 export const TextWeights = {
@@ -60,6 +61,16 @@ export const ResizeConstraints = {
     HEIGHT: 0b00101111
 };
 
+export const ResizeConstraintsMask = {
+    NONE:    0b00000000,
+    TOP:     0b00100000,
+    HEIGHT:  0b00010000,
+    BOTTOM:  0b00001000,
+    LEFT:    0b00000100,
+    WIDTH:   0b00000010,
+    RIGHT:   0b00000001,
+};
+
 // TODO: Are these accurate?
 export const VerticalAlignments = {
     '0': 'top',
@@ -72,3 +83,16 @@ export const BorderPositions = {
     '1': 'inside',
     '2': 'outside'
 };
+
+// https://github.com/sketch-hq/SketchAPI/blob/develop/Source/dom/layers/Text.js
+export const LineSpacingBehaviours = {
+    '0': 'none',
+    '1': 'variable', // uses min and max line height on paragraph style
+    '2': 'consistent-baseline' // Uses MSConstantBaselineTypesetter for fixed line height
+}
+
+// https://sketchtalk.io/discussion/2975/bounding-box-auto-resize-to-height-of-text-block-impossible
+export const TextBehaviours = {
+    '0': 'auto', // width is adjusted to fit the content
+    '1': 'fixed' // width is fixed
+}

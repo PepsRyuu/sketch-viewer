@@ -5,7 +5,6 @@ import ArtboardElement from './elements/ArtboardElement';
 import TextElement from './elements/TextElement';
 import ShapeElement from './elements/ShapeElement';
 import BitmapElement from './elements/BitmapElement';
-import ShapeGroupElement from './elements/ShapeGroupElement';
 
 const ELEMENT_MAP = {
     'artboard': ArtboardElement,

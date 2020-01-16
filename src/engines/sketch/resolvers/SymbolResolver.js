@@ -1,4 +1,4 @@
-import { TextWeights, ResizeConstraints } from '../Constants';
+import { TextWeights, ResizeConstraints, ResizeConstraintsMask } from '../Constants';
 import { parseNumberSet } from '../utils';
 import { getFontStyle } from '../models/TextModel';
 
@@ -25,6 +25,10 @@ function measureText (font_style, text) {
     ctx.fillText(text, 10, 10);
 
     return ctx.measureText(text);
+}
+
+function checkBitmask (value, mask) {
+    return (value & mask) === 0;
 }
 
 function getSymbolMasterImpl ( layers, id) {
@@ -96,27 +100,28 @@ function applyOverrides ( layer) {
 
             let [id_path, override_type] = override.overrideName.split('_');
             let id_path_parts = id_path.split('/');
+            let target_layer = undefined;
+            let search_layer = layer;
+            let id_path_index = 0;
 
-            let target_layer = layer;
-            
             for (let i = 0; i < id_path_parts.length; i++) {
-                let found = findTargetLayer(target_layer, id_path_parts[i]);
+                let found = findTargetLayer(search_layer, id_path_parts[i]);
                 if (found) {
-                    target_layer = found;
-                }
-
-                if (i === id_path_parts.length - 1) {
-                    break;
+                    search_layer = found;
+                    if (i === id_path_parts.length - 1) {
+                        target_layer = found;
+                    }
                 }
             }
 
             if (target_layer) {
-                if (override_type === 'stringValue') {
+                if (override_type === 'stringValue' && !target_layer.__overrided_text) {
                     if (target_layer.attributedString) {
                         target_layer.attributedString.string = override.value;
                         if (target_layer.attributedString.attributes.length === 1) {
                             target_layer.attributedString.attributes[0].length = override.value.length;
                         }
+                        target_layer.__overrided_text = true;
                     }
                 }
 
@@ -133,6 +138,13 @@ function applyOverrides ( layer) {
                             verticalAlignment: target_layer.style.textStyle.verticalAlignment
                         };
                     });
+                }
+
+                if (override_type === 'image') {
+                    let fill = target_layer.style.fills.find(f => f.fillType === 4);
+                    if (fill) {
+                        fill.image._ref = override.value._ref;
+                    }
                 }
             }
         });
@@ -156,6 +168,8 @@ function resolveSymbols (layers) {
 
                 if (master) {
                     layers[i].layers = JSON.parse(JSON.stringify(master.layers));
+                    layers[i].resizesContent = master.resizesContent;
+                    layers[i].groupLayout = master.groupLayout;
                     layers[i].__master = JSON.parse(JSON.stringify(master));
                 }
             }
@@ -192,101 +206,84 @@ function resolveOverrides (layers) {
 
 function resolveResizes (layers) {
 
-    let resizeLayers = (layers, master) => {
+    let groupResizeLayers = (layers, parent) => {
         layers.forEach(child => {
-            if (
-                child._class === 'symbolInstance'
-            ) {
-                return;
+            if (child.frame.__width === undefined) {
+                child.frame.__width = child.frame.width;
+                child.frame.__height = child.frame.height;
+                child.frame.__x = child.frame.x;
+                child.frame.__y = child.frame.y;
             }
 
-            if (master && master.frame.constrainProportions) {
-                let constraint = child.resizingConstraint;
+            let constraint = child.resizingConstraint;
 
-                if ((ResizeConstraints.WIDTH | constraint) !== ResizeConstraints.WIDTH &&
-                    (ResizeConstraints.HEIGHT | constraint) !== ResizeConstraints.HEIGHT) {
-                    
-                    // Auto-scale both width and height together.
-                    let ratio = 1;
-                    if (child.frame.width > child.frame.height) {
-                        ratio = master.frame.width / child.frame.width;
-                    } else {
-                        ratio = master.frame.height / child.frame.height; 
-                    }
-
-                    if (ratio < 1) {
-                        child.frame.__width = child.frame.width;
-                        child.frame.__height = child.frame.height;
-                        child.frame.__x = child.frame.x;
-                        child.frame.__y = child.frame.y;
-
-                        child.frame.width *= ratio;
-                        child.frame.height *= ratio;
-
-                        child.frame.x = (child.frame.x / master.frame.width) * child.frame.width;
-                        child.frame.y = (child.frame.y / master.frame.height) * child.frame.height;
-                    } 
-                }
+            if (!checkBitmask(constraint, ResizeConstraintsMask.WIDTH)) {
+                child.frame.width = Math.round(child.frame.width / parent.frame.__width * parent.frame.width);
             }
+            
+            if (!checkBitmask(constraint, ResizeConstraintsMask.HEIGHT)) {
+                child.frame.height = Math.round(child.frame.height / parent.frame.__height * parent.frame.height);
+            }
+            
+            if (!checkBitmask(constraint, ResizeConstraintsMask.LEFT)) {
+                child.frame.x = Math.round(child.frame.x / parent.frame.__width * parent.frame.width);
+            }
+            
+            if (!checkBitmask(constraint, ResizeConstraintsMask.TOP)) {
+                child.frame.y = Math.round(child.frame.y / parent.frame.__height * parent.frame.height);
+            }
+            
+            if (child._class !== 'symbolInstance') {
+                groupResizeLayers(child.layers || [], child);
+            }
+        });
+    }
 
-            if (master && master.frame.constrainProportions === false) {
-                let constraint = child.resizingConstraint;
-
-                if (child.frame.width > master.frame.width || child.frame.height > master.frame.height) {
-                    if ((ResizeConstraints.WIDTH | constraint) !== ResizeConstraints.WIDTH) {
-                        let ratio = master.frame.width / child.frame.width;
-                        child.frame.__width = child.frame.width;
-                        child.frame.__x = child.frame.x;
-                        child.frame.width *= ratio;
-                        child.frame.x = (child.frame.x / master.__master.frame.width) * child.frame.width;
-                    } 
-
-                    if  ((ResizeConstraints.HEIGHT | constraint) !== ResizeConstraints.HEIGHT) {
-                        let ratio = master.frame.height / child.frame.height;
-                        child.frame.__height = child.frame.height;
-                        child.frame.__y = child.frame.y;
-                        child.frame.height *= ratio;
-                        child.frame.y = (child.frame.y / master.__master.frame.height) * child.frame.height;
-                    }
+    let resizeLayers = (layers, symbolInstance) => {
+        layers.forEach(child => {
+            if (symbolInstance) {
+                let master = symbolInstance.__master;
+                if (child.frame.__width === undefined) {
+                    child.frame.__width = child.frame.width;
+                    child.frame.__height = child.frame.height;
+                    child.frame.__x = child.frame.x;
+                    child.frame.__y = child.frame.y;
                 }
 
+                let constraint = child.resizingConstraint;
+
+                if (!checkBitmask(constraint, ResizeConstraintsMask.WIDTH)) {
+                    child.frame.width = Math.round(child.frame.width / master.frame.width * symbolInstance.frame.width);
+                }
                 
-            }
-
-            // Text bound correction
-            if (master && child._class === 'text') {
-                if (child.glyphBounds) {
-                    let glyphBounds = parseNumberSet(child.glyphBounds);
-                    let x1 = glyphBounds[0];
-                    let y1 = glyphBounds[1];
-                    let x2 = glyphBounds[2];
-                    let y2 = glyphBounds[3];
-
-                    // TODO: Width correction
-                    // if (child.frame.__x !== undefined) {
-                    //     child.frame.x = (x1 / child.frame.__width) * child.frame.width;
-                    //     child.frame.width = ((x2 - x1) / child.frame.__width) * child.frame.width;
-                    // }
+                if (!checkBitmask(constraint, ResizeConstraintsMask.HEIGHT)) {
+                    child.frame.height = Math.round(child.frame.height / master.frame.height * symbolInstance.frame.height);
+                    if (child.glyphBounds) {
+                        let bounds = parseNumberSet(child.glyphBounds);
+                        bounds[3] = Math.round(bounds[3] / master.frame.height * symbolInstance.frame.height);
+                        child.glyphBounds = `{{${bounds[0]}, ${bounds[1]}}, {${bounds[2]}, ${bounds[3]}}}`;
+                    }
                 }
-            }
-
-            // TODO: Push content to the right of text out
-            // TODO: Alignment issues still.
-
-            // if (master && child._class === 'text' && child.__overrided) {
-            if (master && child._class === 'text') {
-            //     let props = getFontStyle(child.attributedString.attributes[0].attributes);
-            //     let font_style = `${props['font-weight']} ${props['font-size']}px ${props['font-family']}`;
-            //     canvas.style.letterSpacing = props['letter-spacing'];
-            //     let { width } = measureText(font_style, child.attributedString.string);
-
-            //         // child.frame.__overrided_width = child.frame.width;
-            //         // child.frame.width = 'auto';
-
-                // Not sure why this is needed for these elements.
-                if (master.resizingConstraint === 9) {
-                    child.frame.x = child.frame.__x;
+                
+                if (!checkBitmask(constraint, ResizeConstraintsMask.LEFT)) {
+                    child.frame.x = Math.round(child.frame.x / master.frame.width * symbolInstance.frame.width);
                 }
+                
+                if (!checkBitmask(constraint, ResizeConstraintsMask.TOP)) {
+                    child.frame.y = Math.round(child.frame.y / master.frame.height * symbolInstance.frame.height);
+
+                    if (child.glyphBounds) {
+                        let bounds = parseNumberSet(child.glyphBounds);
+                        bounds[1] = Math.round(bounds[1] / master.frame.height * symbolInstance.frame.height);
+                        child.glyphBounds = `{{${bounds[0]}, ${bounds[1]}}, {${bounds[2]}, ${bounds[3]}}}`;
+                    }
+                }
+
+                if (child._class !== 'symbolInstance') {
+                    groupResizeLayers(child.layers || [], child);
+                }
+                
+                return;
             }
         });
     }

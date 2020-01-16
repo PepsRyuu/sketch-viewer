@@ -14,7 +14,7 @@ function getClipPath (ancestors) {
     if (parent) {
         for (let i = 0; i < parent.children.length; i++ ){
             let child = parent.children[i];
-            if (child._class === 'symbolInstance') {
+            if (child._class === 'symbolInstance' && child.children.length === 1) {
                 child = child.children[0];
             }
 
@@ -26,7 +26,6 @@ function getClipPath (ancestors) {
 }
 
 export default function ShapeModel (layer, parent, ancestors) {
-
     return {
         fill: getFill(layer),
         border: getBorder(layer),

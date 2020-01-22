@@ -1,8 +1,10 @@
 import { Component } from 'preact';
 import InspectPanel from './components/inspect-panel/InspectPanel';
 import SelectBox from './components/select-box/SelectBox';
-import FileResolver from './resolvers/FileResolver';
-import ArtboardResolver from './resolvers/ArtboardResolver';
+import SketchFileResolver from './engines/sketch/resolvers/FileResolver';
+import SketchArtboardResolver from './engines/sketch/resolvers/ArtboardResolver';
+import XDFileResolver from './engines/xd/resolvers/FileResolver';
+import XDArtboardResolver from './engines/xd/resolvers/ArtboardResolver';
 import { OpenJSON } from './utils/index';
 import Renderer from './components/renderer/Renderer';
 import './App.scss';
@@ -49,14 +51,18 @@ export default class App extends Component {
      */
     onFileLoad (e) {
         let input = e.target.files[0];
+        let fileType = input.name.endsWith('.sketch')? 'sketch' : 'xd';
 
         this.setState({ 
             loading: true,
             file: undefined, 
             resolvedArtboard: undefined,
             selectedPage: undefined,
-            selectedArtboard: undefined
+            selectedArtboard: undefined,
+            fileType
         });
+
+        let FileResolver = fileType === 'sketch'? SketchFileResolver : XDFileResolver;
 
         FileResolver(input).then(file => {
             this.state.file = file;
@@ -99,12 +105,14 @@ export default class App extends Component {
     setUpdatedPageAndArtboard (pageIndex, artboardIndex) {
         if (this.state.selectedPage !== pageIndex || this.state.selectedArtboard !== artboardIndex) {
             let artboardId = this.state.file.pages[pageIndex].artboards[artboardIndex].id;
-            let artboardData = this.state.file.pages[pageIndex].data.layers.find(l => l.do_objectID === artboardId)
+            let artboardData = this.state.file.pages[pageIndex].data.find(l => l.id === artboardId).data
+            let ArtboardResolver = this.state.fileType === 'sketch'? SketchArtboardResolver : XDArtboardResolver;
 
             this.setState({
                 selectedPage: pageIndex,
                 selectedArtboard: artboardIndex,
-                resolvedArtboard: ArtboardResolver(artboardData)
+                resolvedArtboard: ArtboardResolver(artboardData),
+                originalArtboard: artboardData
             });
         }
     }
@@ -150,7 +158,7 @@ export default class App extends Component {
                                 selected={activeArtboard.id}
                                 onChange={this.onArtboardChange.bind(this)}
                             />
-                            <button onClick={() => OpenJSON(this.state.file.pages[this.state.selectedPage])}>Open JSON</button>
+                            <button onClick={() => OpenJSON(this.state.selectedArtboard, this.state.originalArtboard)}>Open JSON</button>
                         </div>
                     )}
                 </div>

@@ -1,84 +1,43 @@
-function generateShapePath (node, offset) {
-    function parsePoint (point) {
-        let _w = node.width;
-        let _h = node.height;
-        let _x = offset.x;
-        let _y = offset.y;
-        return (point[0] * _w + _x) + ' ' + (point[1] * _h + _y);
+let clipIndex = 0;
+export function getClipPath (attrs) {
+    let clipEl, clipId;
+
+    if (attrs.clipPath) {
+        clipId = `__clip__${clipIndex++}`;
+
+        let clipPath = attrs.clipPath;
+
+        // Have to use shapeGroup frame, not child frame.
+        let clipPathFrame = {
+            x: attrs.clipPath.attributes.x,
+            y: attrs.clipPath.attributes.y,
+            width: attrs.clipPath.attributes.width,
+            height: attrs.clipPath.attributes.height
+        };
+
+        let c = clipPath.attributes;
+        let d = clipPath.attributes.path;
+        let transform = `
+            translate(${clipPathFrame.x - attrs.x}px, ${clipPathFrame.y - attrs.y}px)
+            translate(${clipPathFrame.width / 2}px, ${clipPathFrame.height / 2}px)
+            rotate(${c.rotation}deg)
+            translate(-${clipPathFrame.width / 2}px, -${clipPathFrame.height / 2}px)
+        `;
+
+        clipEl = (
+            <clipPath id={clipId}>
+                <path d={d} style={`transform: ${transform}`} />
+            </clipPath>
+        );
+
+        return {
+            props: {
+                'clip-path': `url(#${clipId})`
+            },
+            output: clipEl
+        };
     }
 
-    let points = JSON.parse(JSON.stringify(node.path.points));
-
-    points.forEach((p, i) => {
-        if (p.hasCurveTo) {
-            let next = i === points.length - 1? 0 : i + 1;
-            points[next].hasCurveFrom = true;
-        }
-    });
-
-
-    let start = parsePoint(points[0].point);
-    let d = `M ${start} `;
-
-    for (let i = 1; i < points.length; i++) {
-        let curr = points[i];
-        let prev = i === 0? points[points.length - 1] : points[i - 1];
-        let p = parsePoint(curr.point);
-
-        if (curr.hasCurveFrom || curr.hasCurveTo) {
-            let c1 = parsePoint(prev.curveFrom);
-            let c2 = parsePoint(curr.curveTo);
-
-            d += `C ${c1}, ${c2}, ${p} `;
-        } else {
-            d += `L ${p} `;
-        }
-
-    }
-
-    if (node.path.closed) {
-        let p = parsePoint(points[0].point);
-
-        if (points[0].hasCurveFrom || points[0].hasCurveTo) {
-            
-            let c1 = parsePoint(points[points.length - 1].curveFrom);
-            let c2 = parsePoint(points[0].curveTo);
-
-            d += `C ${c1}, ${c2}, ${p} `;
-        } else {
-            d += `L ${p}`
-        }
-
-        d += 'z';
-    }
-
-    return d.replace(/-0/g, '0')
+    return {};
 }
 
-function generateRectangle (node, offset) {
-    let { width, height } = node;
-    let x = offset.x, y = offset.y;
-    let points = node.path.points;
-
-    let corners = points.map(p => {
-        return Math.min(Math.min(width, height) / 2, p.cornerRadius);
-    });
-
-    let d = `M  ${x + corners[0]} ${y} `
-      + `h ${Math.max(0, width - corners[0] - corners[1])} `
-      + `a ${corners[1]} ${corners[1]} 0 0 1 ${corners[1]} ${corners[1]} `
-      + `v ${Math.max(0, height - corners[1] - corners[2])} `
-      + `a ${corners[2]} ${corners[2]} 0 0 1 -${corners[2]} ${corners[2]} `
-      + `h -${Math.max(0, width - corners[2] - corners[3])} `
-      + `a ${corners[3]} ${corners[3]} 0 0 1 -${corners[3]} -${corners[3]} `
-      + `v -${Math.max(0, height - corners[3] - corners[0])} `
-      + `a ${corners[0]} ${corners[0]} 0 0 1 ${corners[0]} -${corners[0]} `
-      + `z`
-
-    return d.replace(/-0/g, '0')
-           
-}
-
-export function createShapePath (_class, node, offset = {x: 0, y: 0}) {
-    return _class === 'rectangle'? generateRectangle(node, offset) : generateShapePath(node, offset);
-}

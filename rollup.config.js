@@ -1,7 +1,6 @@
 let node_resolve = require('rollup-plugin-node-resolve');
 let babel = require('rollup-plugin-babel');
 let css = require('rollup-plugin-hot-css');
-let glob = require('rollup-plugin-glob-import');
 
 let scss = (code, id) => {
     return require('node-sass').renderSync({
@@ -20,7 +19,6 @@ let config = {
         entryFileNames: '[name].js'
     },
     plugins: [
-    	glob(),
         css({
             filename: 'styles.css',
             hot: process.env.NODE_ENV === 'development',

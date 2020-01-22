@@ -5,7 +5,6 @@ import ArtboardElement from './elements/ArtboardElement';
 import TextElement from './elements/TextElement';
 import ShapeElement from './elements/ShapeElement';
 import BitmapElement from './elements/BitmapElement';
-import ShapeGroupElement from './elements/ShapeGroupElement';
 
 const ELEMENT_MAP = {
     'artboard': ArtboardElement,
@@ -14,11 +13,12 @@ const ELEMENT_MAP = {
     'oval': ShapeElement,
     'triangle': ShapeElement,
     'shapePath': ShapeElement,
+    'shape': ShapeElement,
     'bitmap': BitmapElement,
-    'shapeGroup': ShapeGroupElement
+    'shapeGroup': ShapeElement
 };
 
-function renderNode (node) {
+function renderNode (props, node) {
     let el;
 
     if (ELEMENT_MAP[node._class]) {
@@ -40,35 +40,32 @@ function renderNode (node) {
 
     el.attributes.onClick = e => {
         e.stopPropagation();
-        this.props.onOutputClick(node);
+        props.onOutputClick(node);
     };
 
     el.attributes.onMouseEnter = e => {
         e.stopPropagation();
-        this.props.onOutputHover(node);
+        props.onOutputHover(node);
     };
 
     BaseStyler(node, el);
 
     if (el.nodeName !== 'svg' && node.children.length > 0) {
-       el.children = node.children.map(n => renderNode.call(this, n)); 
+       el.children = node.children.map(n => renderNode(props, n)); 
     }
 
     return el;
 }
 
-export default class RendererOutput extends Component {
-    render () {
-        try {
-            return (
-                <div class="RendererOutput">
-                    {renderNode.call(this, this.props.data)}
-                </div>
-            );
-        } catch (e) {
-            console.error(e);
-            return (<div style="white-space: pre-wrap">{e.message + e.stack}</div>);
-        }
-       
+export default function RendererOutput (props) {
+    try {
+        return (
+            <div class="RendererOutput">
+                {renderNode(props, props.data)}
+            </div>
+        );
+    } catch (e) {
+        console.error(e);
+        return (<div style="white-space: pre-wrap">{e.message + e.stack}</div>);
     }
 }

@@ -4,3 +4,4 @@ __notes__
 dist
 package-lock.json
 target
+coverage

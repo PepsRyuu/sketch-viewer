@@ -12,12 +12,14 @@ export default function BaseStyler (node, el) {
 
     el.attributes.style.top = attrs.y + 'px';
     el.attributes.style.left = attrs.x + 'px';
-    el.attributes.style.width = attrs.width + 'px';
+    el.attributes.style.width = attrs.width === 'auto'? 'auto' : attrs.width + 'px';
     el.attributes.style.height = attrs.height + 'px';
     el.attributes.style.opacity = attrs.opacity;
 
     el.attributes.style.transform = `
-        scale(${attrs.scaleX}, ${attrs.scaleY}) rotate(${attrs.rotation}deg)
+        scale(${attrs.scaleX}, ${attrs.scaleY}) 
+        rotate(${attrs.rotation}deg) 
+        translate(${attrs.offsetX || 0}, ${attrs.offsetY || 0})
     `;
     
     if (!attrs.visible) {

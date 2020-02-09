@@ -1,4 +1,14 @@
-import { getDOMColorXD } from '../../../utils/index';
+import { getImageData } from '../../../utils/index';
+import { getDOMColor } from '../utils';
+import { path, paper } from '../../../utils/Node';
+
+let canvas = document.createElement('canvas');
+canvas.width = 1920;
+canvas.height = 1080;
+canvas.setAttribute('style', 'position: fixed; top: -9999px; left: -9999px');
+let paper_project = paper.setup(canvas);
+document.body.appendChild(canvas);
+
 
 function getPath (node) {
     let shape = node.shape;
@@ -51,10 +61,42 @@ function getPath (node) {
         }
     }
 
-    if (shape.type === 'path') {
+    if (shape.type === 'path' || shape.type === 'compound') {
+        let paper_group = new paper.Group();
+        let strokeProps = '', offsetY, offsetX;
+
+        if (node.style?.stroke) {
+            strokeProps = `stroke-width="${node.style.stroke.width}" stroke="black"`;
+        }
+
+        paper_group.importSVG(`<g><path d="${shape.path}" ${strokeProps}></path></g>`);
+
+        if (paper_group.strokeBounds.y > paper_group.strokeBounds.height) {
+            offsetY = paper_group.strokeBounds.y + 'px';
+            offsetX = paper_group.strokeBounds.x + 'px';
+            let x = paper_group.strokeBounds.x;
+            let y = paper_group.strokeBounds.y;
+
+            let paper_path = paper_group.children[0].children[0];
+            if (paper_path.getClassName() === 'CompoundPath') {
+                paper_path.children.forEach(path => {
+                    path.segments.forEach(s => {
+                        s.transform(new paper.Matrix(1, 0, 0, 1, -x, -y))
+                    });
+                })
+            } else {
+                paper_path.segments.forEach(s => {
+                    s.transform(new paper.Matrix(1, 0, 0, 1, -x, -y))
+                });
+            } 
+        }
+
         return {
-            path: shape.path,
-            // TODO: Parse width and height using the path values
+            path: paper_group.exportSVG().querySelector('path').getAttribute('d'),
+            width: paper_group.strokeBounds.width,
+            height: paper_group.strokeBounds.height,
+            offsetY,
+            offsetX
         }
     }
 
@@ -73,7 +115,7 @@ function getFill (fill, opts) {
             output.push({
                 type: 'color',
                 blend: 'normal',
-                color: getDOMColorXD(fill.color)
+                color: getDOMColor(fill.color)
             });
         }
 
@@ -89,7 +131,7 @@ function getFill (fill, opts) {
                     r: fill.gradient.r / opts.width,
                     stops: fill.gradient.stops.map(s => {
                         return {
-                            color: getDOMColorXD(s.color),
+                            color: getDOMColor(s.color),
                             position: s.offset
                         }
                     })
@@ -102,7 +144,7 @@ function getFill (fill, opts) {
                     end: [fill.gradient.x2, fill.gradient.y2],
                     stops: fill.gradient.stops.map(s => {
                         return {
-                            color: getDOMColorXD(s.color),
+                            color: getDOMColor(s.color),
                             position: s.offset
                         }
                     })
@@ -111,14 +153,83 @@ function getFill (fill, opts) {
             
         }
 
+        if (fill.type === 'pattern') {
+            if (fill.pattern.meta.ux.uid) {
+                let extension = path.extname(fill.pattern.href);
+
+                output.push({
+                    type: 'image',
+                    blend: 'normal',
+                    href: getImageData(fill.pattern.meta.ux.uid, extension)
+                });
+            }
+        }
+
         return output;
     }
 
-    return [];
+    return [{ 
+        type: 'color',
+        blend: 'normal',
+        color: 'rgba(1,1,1,0)'
+    }];
 }
 
-export default function ShapeModel (node) {
-    let { width, height, path } = getPath(node);
+function getShadow (node) {
+    let shadows = node.style && node.style.filters? node.style.filters.filter(f => f.type === 'dropShadow' && f.visible !== false) : [];
+
+    if (shadows.length > 0) {
+        let s = shadows[0].params.dropShadows[0];
+
+        return {
+            color: getDOMColor(s.color),
+            offsetX: s.dx,
+            offsetY: s.dy,
+            blurRadius: s.r
+        }
+    }
+}
+
+function getClipPath (ancestors) {
+    let clipPath, parent, parentIndex = ancestors.length - 1;
+
+    while (parent = ancestors[parentIndex]) {
+        if (parent.attributes.useAsClipPath) {
+            clipPath = parent.attributes.useAsClipPath;
+        }
+
+        parentIndex--;
+    }
+
+    // Empty clipPaths possible
+    if (clipPath && clipPath.children) {
+        let { width, height, path } = getPath(clipPath.children[0]);
+
+        let x = ancestors[ancestors.length - 3].attributes.x;
+        let y = ancestors[ancestors.length - 3].attributes.y;
+
+        // Clippath based on rects don't have this
+        if (clipPath.children[0].transform) {
+            x += clipPath.children[0].transform.tx;
+            y += clipPath.children[0].transform.ty;
+        }
+
+        return {
+            attributes: {
+                x: x,
+                y: y,
+                width: width,
+                height: height,
+                rotation: 0,
+                path: path
+            }  
+        }
+    }
+}
+
+
+export default function ShapeModel (node, parent, ancestors) {
+    let { offsetX, offsetY, width, height, path } = getPath(node);
 
     return {
         fill: (node.style && getFill(node.style.fill, { width, height })) || [],
@@ -127,18 +238,21 @@ export default function ShapeModel (node) {
             fill: [{
                 type: 'color',
                 blend: 'normal',
-                color: getDOMColorXD(node.style.stroke.color)
+                color: getDOMColor(node.style.stroke.color)
             }],
             width: node.style.stroke.width,
             dasharray: 0,
-            position: 'center'
+            position: node.style.stroke.align || 'center'
         }],
         // innerShadow: [],
-        // shadow: getShadow(layer),
+        shadow: getShadow(node),
         path: path,
         useAsClipPath: false,
         booleanOperation: 'none',
         width: width,
-        height: height
+        height: height,
+        clipPath: getClipPath(ancestors),
+        offsetY: offsetY,
+        offsetX
     }
 }

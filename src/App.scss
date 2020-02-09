@@ -4,14 +4,15 @@
     left: 0;
     right: 0;
     bottom: 0;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
 
     &-toolbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
         display: flex;
-        min-height: 56px;
-        max-height: 56px;
+        height: 56px;
         align-items: center;
         padding: 0 20px;
         background-color: rgb(71, 71, 71);
@@ -25,7 +26,11 @@
 
     &-body {
         display: flex;
-        flex: 1;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background-color: rgb(29, 30, 32);
     }
 

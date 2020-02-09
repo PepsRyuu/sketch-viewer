@@ -38,15 +38,17 @@ function renderNode (props, node) {
     el.attributes['data-class'] = node._class;
     el.attributes['data-id'] = node.id;
 
-    el.attributes.onClick = e => {
-        e.stopPropagation();
-        props.onOutputClick(node);
-    };
+    if (ELEMENT_MAP[node._class]) {
+        el.attributes.onClick = e => {
+            e.stopPropagation();
+            props.onOutputClick(node, e.srcElement);
+        };
 
-    el.attributes.onMouseEnter = e => {
-        e.stopPropagation();
-        props.onOutputHover(node);
-    };
+        el.attributes.onMouseEnter = e => {
+            e.stopPropagation();
+            props.onOutputHover(node, e.srcElement);
+        };
+    }
 
     BaseStyler(node, el);
 

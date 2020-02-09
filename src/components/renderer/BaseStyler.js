@@ -26,7 +26,16 @@ export default function BaseStyler (node, el) {
         el.attributes.style.display = 'none';
     }
 
+    if (attrs['transformOrigin']) {
+        el.attributes.style.transformOrigin = attrs.transformOrigin;
+    }
+
     if (attrs['background-color']) {
         el.attributes.style.backgroundColor = attrs['background-color'];
+    }
+
+    if (node._class === 'group' && attrs.shadow) {
+        let s = attrs.shadow;
+        el.attributes.style['box-shadow'] = `${s.offsetX}px ${s.offsetY}px ${s.blurRadius}px ${s.color}`;
     }
 }

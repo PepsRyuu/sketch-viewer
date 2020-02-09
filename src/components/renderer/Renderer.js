@@ -68,13 +68,13 @@ export default class Renderer extends Component {
         el.style.transform = ` translate(${pan.x}px, ${pan.y}px) scale(${zoom}, ${zoom})`        
     }
 
-    onOutputClick (node) {
-        this.props.onNodeClick(node);
+    onOutputClick (node, el) {
+        this.props.onNodeClick(node, el);
     }
 
-    onOutputHover (node) {
+    onOutputHover (node, el) {
         let { zoom, pan } = this.navigator.getState();
-        this.measurer.show(node, pan, zoom);
+        this.measurer.show(node, pan, zoom, el);
     }
 
     render () {

@@ -203,7 +203,8 @@ export function getBorder (node, el) {
                     d={el.attributes.d} 
                     stroke-width={strokeWidth}
                     transform={`scale(${scaleX}, ${scaleY}) translate(${strokeWidth / -2}, ${strokeWidth / -2})`}
-                    stroke={css}                    
+                    stroke={css}  
+                    fill="transparent"                  
                     vector-effect="non-scaling-stroke"
                     stroke-dasharray={outsides[0].dasharray}
                 />

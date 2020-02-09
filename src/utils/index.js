@@ -14,20 +14,7 @@ export function OpenJSON (file_name, file_json) {
     electron.shell.openItem(path.resolve(process.cwd(), filepath));   
 }
 
-export function getDOMColorXD (color) {
-    let c = color.value;
-    let a = color.alpha !== undefined? color.alpha : 1;
-    return `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`
-}
-
-export function withProperty (layer, path, callback) {
-    let hr = getProperty(layer, path);
-    if (hr) {
-        callback(hr);
-    } 
-}
-
-export function getImageData (ref) {
+export function getImageData (ref, defaultExtension) {
     let data;
     let extension;
 
@@ -35,7 +22,24 @@ export function getImageData (ref) {
         let entry = window.__page__images[i];
         if (entry.name.indexOf(ref) === 0) {
             data = entry.data;
-            extension = entry.name.match(/\.[\w]+$/)[0];
+            extension = defaultExtension || (function () {
+                let match = entry.name.match(/\.[\w]+$/);
+                if (match) {
+                    return match[0];
+                }
+            })() || (function () {
+                // No extension found at all
+                let sample = atob(data).slice(0, 20).toLowerCase();
+                if (sample.indexOf('png') > -1) {
+                    return '.png';
+                }
+
+                if (sample.indexOf('jpg') > -1 || sample.indexOf('jpeg') > -1) {
+                    return '.jpg';
+                }
+
+                return '.tiff';
+            })()
             break;
         }
     }
@@ -45,28 +49,6 @@ export function getImageData (ref) {
     } else {
         return `data:image/svg+xml;utf8,<svg></svg>`;
     }
-}
-
-export function getProperty (layer, path) {
-    let parts = path.split('.');
-    let partIndex = 0;
-    let parent = layer;
-
-    let value = parent[parts[partIndex]];
-    while (partIndex < parts.length) {
-        let value = parent[parts[partIndex]];
-        if (value !== undefined) {
-            if (partIndex === parts.length - 1) {
-                return value;
-                break;
-            } else {
-                partIndex++;
-                parent = value;
-            }
-        } else {
-            break;
-        }
-    } 
 }
 
 export function LoadZipFile (filename) {

@@ -1,94 +1,109 @@
-export function getFontStyle (attrs) {
-    let { name, size } = attrs.MSAttributedStringFontAttribute.attributes;
+import { TextWeights } from '../../../utils/Constants';
 
-    // TODO: NSCTFontUIUsageAttribute
-    if (!name) {
-        name = 'Arial-Regular';
+function getFontWeight (fontStyle) {
+    let name = fontStyle.trim().replace(/ /g, '').toLowerCase().replace('italic', '');
+    let weight = TextWeights[name] || '300';
+    return weight;
+}
+
+function getFontStyle (fontStyle) {
+    if (fontStyle.toLowerCase().indexOf('italic') > -1) {
+        return 'italic';
     }
-
-    let parts = name.split('-');
-    let family = parts[0] + ', ' + parts[0].replace(/([A-Z](?:[a-z]))/g, ' $1').trim();
-    let weight = parts.length === 2? TextWeights[parts[1].toLowerCase()] : '300';
-
-    return {
-        'letter-spacing': (attrs.kerning || -0.1) + 'px',
-        'font-size': size,
-        'font-weight': weight,
-        'font-family': family + ', sans-serif'
-    };
 }
 
-function getColor (attrs) {
-    let color = getDOMColor(attrs.MSAttributedStringColorAttribute);
+function getFontColor (num) {
+    num >>>= 0;
 
-    return {
-        'color': color
+    let color = {
+        b: num & 0xFF,
+        g: (num & 0xFF00) >>> 8,
+        r: (num & 0xFF0000) >>> 16,
+        a: ( (num & 0xFF000000) >>> 24 ) / 255
     };
+
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
 }
 
-function getDecoratorStyle (attrs) {
-    return {
-        'text-decoration': attrs.underlineStyle === 1? 'underline' : 'none'
-    };
+function getLineHeight (node) {
+    return 'normal';
 }
 
-function getAlignmentAndSpacing (attrs) {
-    let lineHeight = 'normal';
+function getStyle (node, start, end) {
+    // Use meta.ux.rangedStyles and figure out what styles apply to the segment
+    // RangedStyles summarise the line segment styles fairly well in a more condensed wa
+    let text_index = 0;
+    let group_style = node.meta.ux.rangedStyles[0];
 
-    if (attrs.paragraphStyle) {
-        if (attrs.paragraphStyle._class === 'paragraphStyle') {
-            if (attrs.paragraphStyle.minimumLineHeight !== undefined) {
-                lineHeight = attrs.paragraphStyle.minimumLineHeight + 'px';
-            } else if (attrs.paragraphStyle.paragraphSpacing) {
-                lineHeight = (1 + attrs.paragraphStyle.paragraphSpacing) + 'em';
-            }
+    for (let i = 0; i < node.meta.ux.rangedStyles.length; i++) {
+        if (start < text_index + node.meta.ux.rangedStyles[i].length) {
+            group_style = node.meta.ux.rangedStyles[i];
+            break;
         }
+
+        text_index += node.meta.ux.rangedStyles[i].length;
+    }
+
+    let fontStyle = group_style.fontStyle;
+    let fontFamily = group_style.fontFamily;
+
+    // Sometimes the style isn't parsed out of the filename
+    if (fontFamily.indexOf('-') > -1) {
+        fontStyle = fontFamily.split('-')[1];
+        fontFamily = fontFamily.split('-')[0];
     }
 
     return {
-        'text-align': TextAlignments[attrs.paragraphStyle && attrs.paragraphStyle.alignment] || 'left',
-        'line-height': lineHeight,
-        'vertical-align': attrs.verticalAlignment !== undefined? VerticalAlignments[attrs.verticalAlignment] : 'middle'
-    };
+        'vertical-align': 'top',
+        'text-transform': group_style.textTransform,
+        'font-family': fontFamily,
+        'font-size': group_style.fontSize + 'px',
+        'font-weight': getFontWeight(fontStyle),
+        'font-style': getFontStyle(fontStyle),
+        'letter-spacing': (group_style.charSpacing / 100) + 'px', // TODO: -38px for spacing??
+        'text-decoration': group_style.underline? 'underline' : 'none',
+        'color': getFontColor(group_style.fill.value),
+        'line-height': getLineHeight(node)
+    }
 }
 
+function getWidth (node) {
+    if (node.text.frame.type === 'area') {
+        return node.text.frame.width;
+    }
+
+    return 'auto';
+}
+
+function getHeight (node) {
+    if (node.text.frame.type === 'area') {
+        return node.text.frame.height;
+    }
+
+    return 'auto';
+}
 
 export default function TextModel (node) {
-    let color = node.style.fill.color.value;
-    color = `rgb(${color.r}, ${color.g}, ${color.b})`;
-
-
     return {
-        // 'text-wrap': //'pre' : 'pre-wrap',
         'text-wrap': 'pre',
-        'width': 'auto',
-        'height': 'auto',
-        'strings': [node.text.rawText].map(text => {
-            if (node.meta.ux.rangedStyles && node.meta.ux.rangedStyles[0]) {
-                let textTransform = node.meta.ux.rangedStyles[0].textTransform;
+        'width': getWidth(node),
+        'height': getHeight(node),
+        'paragraphs': node.text.paragraphs.map(paragraph => {
+            return paragraph.lines.map(line => {
+                let fontSize = node.meta.ux.rangedStyles[0].fontSize;
+                let deltaY = fontSize;
 
-                if (textTransform === 'titlecase') {
-                    text = text.replace(/(^| |\n)([a-z])/g, (full, a, b) => { 
-                        return a + b.toUpperCase();
+                return {
+                    x: (line[0].x || 0),
+                    y: (line[0].y - deltaY),
+                    segments: line.map(segment => {
+                        return {
+                            value: node.text.rawText.slice(segment.from, segment.to),
+                            style: getStyle(node, segment.from, segment.to)
+                        }
                     })
                 }
-            }
-
-            return {
-                value: text,
-                attributes: {
-                    'text-transform': 'auto',
-                    'letter-spacing': '-0.1px',
-                    'font-size': node.style.font.size,
-                    'font-family': node.style.font.family + ', sans-serif',
-                    'font-weight': node.style.font.style, // TODO: to weight
-                    'text-align': 'auto' ,
-                    'text-decoration': 'auto',
-                    'line-height': 'auto',
-                    'vertical-align': 'auto',
-                    'color': color
-                } 
-            };
-        })
-    };
+            }).flat()
+        }).flat()
+    }
 }

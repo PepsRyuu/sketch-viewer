@@ -1,5 +1,6 @@
 import { getDOMColor, parseNumberSet } from '../utils';
-import { TextWeights, TextAlignments, VerticalAlignments } from '../Constants';
+import { TextAlignments, VerticalAlignments } from '../Constants';
+import { TextWeights } from '../../../utils/Constants';
 
 export function getFontStyle (attrs) {
     let { name, size } = attrs.MSAttributedStringFontAttribute.attributes;

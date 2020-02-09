@@ -1,7 +1,7 @@
 import { Component } from 'preact';
 import './InspectPanel.scss'
 
-let ATTRIBUTES_TO_SHOW = ['width', 'height', 'rotation', 'opacity', 'fill', 'border', 'innerShadow', 'shadow', 'strings', 'background-color'];
+let ATTRIBUTES_TO_SHOW = ['width', 'height', 'rotation', 'opacity', 'fill', 'border', 'innerShadow', 'shadow', 'strings', 'background-color', 'paragraphs'];
 
 function formatAttribute (key, value) {
     function outputValue (key, value) {
@@ -43,6 +43,7 @@ function formatAttribute (key, value) {
 export default class InspectPanel extends Component {
         
     render () {
+
         return (
             <div class="InspectPanel">
                 {this.props.node && Object.keys(this.props.node.attributes).filter(key => ATTRIBUTES_TO_SHOW.indexOf(key) > -1).map(n => {

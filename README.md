@@ -43,6 +43,7 @@ Install the font globally on your system.
 
 ## Known Issues
 * Symbol overrides are not perfect yet.
+* Smart layouts not implemented.
 * Most shape paths should render fine, but there's some more obscure ones that won't render correctly yet.
 * Sometimes text elements may wrap to the next line when they shouldn't.
 * Shadows not fully working.

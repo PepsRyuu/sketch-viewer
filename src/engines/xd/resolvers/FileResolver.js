@@ -24,6 +24,14 @@ export default async function FileResolver (filename) {
                 let component = child.components[i];
                 if (component.type.startsWith('image')) {
                     // push to images
+                    let file = path + '/' + component.path;
+                    if (file.startsWith('/')) {
+                        file = file.substring(1);
+                    }
+                    output.images.push({
+                        name: component.path,
+                        data: await zip.loadImage(file)
+                    });
                 } else if (component.type === 'application/vnd.adobe.agc.graphicsTree+json') {
                     page.artboards.push({
                         id: component.id,
@@ -51,11 +59,11 @@ export default async function FileResolver (filename) {
     await pushComponents('', '', manifest);
 
     page.data.forEach(d => {
-        if (d.data.artboards && d.data.artboards.href) {
+        if (d.data.artboards?.href) {
             d.data.artboards = page.data.find(o => o.path === d.data.artboards.href).data.artboards;
         }
 
-        if (d.data.resources && d.data.resources.href) {
+        if (d.data.resources?.href) {
             d.data.resources = page.data.find(o => o.path === d.data.resources.href).data.resources;
         }
     });

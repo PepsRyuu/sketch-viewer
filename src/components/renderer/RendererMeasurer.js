@@ -12,52 +12,31 @@ const style = {
 const line_color = '#EE7600';
 const font_style = '12px Arial';
 
-function getNodePosition (node, pan, zoom) {
-    let x = 0, y = 0;
+function getBoundingClientRect (el) {
+    let { x, y, width, height } = el.getBoundingClientRect();
 
-    let impl = node => {
-        x += node.attributes.x * zoom;
-        y += node.attributes.y * zoom;
+    if (el.getAttribute('data-class') === 'text') {
+        let text_bounds = [].map.call(el.querySelectorAll('span'), s => s.getBoundingClientRect());
+        let last = text_bounds[text_bounds.length - 1];
+        height = (last.y - y) + last.height;
+        width = Math.max(...text_bounds.map(b => b.width));
 
-        if (node.parent) {
-            impl(node.parent);
+        // Correction for elements with -top;
+        let first = text_bounds[0];
+        if (first.y < y) {
+            height += (y - first.y);
+            y = y - (y - first.y);
         }
     }
 
-    impl(node);
+    y -= 56;
 
-    x += pan.x;
-    y += pan.y;
-
-    return { x, y };
-}
-
-function getNodeSize (node, pan, zoom) {
-    return {
-        width: node.attributes.width * zoom,
-        height: node.attributes.height * zoom
-    };
-}
-
-function findClosestNode (node, fn, defaulter) {
-    let closest;
-    let targets = [].concat(node.parent.children).concat([node.parent]);
-
-    targets.forEach(target => {
-        if (fn(node.attributes, target.attributes, (closest? closest.attributes : null))) {
-            closest = target;
-        }
-    });
-
-    if (closest) {
-        return { id: closest.id, parent: closest.parent, attributes: fn(node.attributes, closest.attributes) };
-    }
-
+    return { x, y, width, height };
 }
 
 export default class RendererMeasurer extends Component {
 
-    show (node, pan, zoom) {
+    show (node, pan, zoom, el) {
         this.forceUpdate(); // trigger resize
 
         let ctx = this.canvas.getContext('2d');
@@ -66,103 +45,18 @@ export default class RendererMeasurer extends Component {
             this.activeNode = node;
             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            let position = getNodePosition(node, pan, zoom);
-            let size = getNodeSize(node, pan, zoom);
+            let { x, y, width, height } = getBoundingClientRect(el);
+
+            let hierarchy = document.elementsFromPoint(x + width / 2, y + 56 + height / 2);
+            hierarchy = [].slice.call(hierarchy, hierarchy.indexOf(el) + 1).filter(h => {
+                return (
+                    h.tagName === 'svg' || 
+                    h.getAttribute('data-class') === 'artboard'
+                );
+            });
+
             ctx.strokeStyle = line_color;
-            ctx.strokeRect(position.x, position.y, size.width, size.height);
-
-            if (node === null || node.parent === null) {
-                return;
-            }
-
-            let nodeToMeasure = node;
-            while (nodeToMeasure !== null) {
-                if (nodeToMeasure.attributes.x === 0 && nodeToMeasure.attributes.y === 0) {
-                    nodeToMeasure = nodeToMeasure.parent;
-                } else {
-                    break;
-                }
-            }
-
-            if (nodeToMeasure === null) {
-                return;
-            }
-
-            let closestLeft = findClosestNode(nodeToMeasure, (n, t, c) => {
-                let result;
-                if (n.y + n.height / 2 >= t.y && n.y + n.height / 2 <= t.y + t.height) {
-                    if (t.x + t.width < n.x) {
-                        result = { x: t.x + t.width, y: t.y, height: t.height, width: 0};
-                    }
-
-                    if (n.x > t.x && n.x < t.x + t.width) {
-                        result = { x: t.x, y: t.y, height: t.height, width: 0 };
-                    }   
-                }
-
-                if (!c || (result && result.x > c.x + c.width)) {
-                    return result;
-                }
-            });
-
-            let closestRight = findClosestNode(nodeToMeasure, (n, t, c) => {
-                let result;
-                if (n.y + n.height / 2 >= t.y && n.y + n.height / 2 <= t.y + t.height) {
-                    if (t.x > n.x + n.width) {
-                        result = { x: t.x, y: t.y, height: t.height, width: 0};
-                    }
-
-                    if (n.x + n.width > t.x && n.x + n.width < t.x + t.width) {
-                        result = { x: t.x + t.width, y: t.y, height: t.height, width: 0 };
-                    }   
-
-                    if (n.x >= t.x && n.x + n.width <= t.x + t.width) {
-                        result = { x: t.x + t.width, y: t.y, height: t.height, width: 0 };
-                    }
-                }
-
-                if (!c || (result && result.x < c.x)) {
-                    return result;
-                }
-            });
-
-            let closestUp = findClosestNode(nodeToMeasure, (n, t, c) => {
-                let result;
-                if (n.x + n.width / 2 >= t.x && n.x + n.width / 2 <= t.x + t.width) {
-                    if (t.y + t.height < n.y) {
-                        result = { x: t.x, y: t.y + t.height, height: 0, width: t.width };
-                    }
-
-                    if (n.y > t.y && n.y < t.y + t.height) {
-                        result = { x: t.x, y: t.y, height: 0, width: t.width };
-                    }
-                }
-
-                if (!c || (result && result.y > c.y + c.height)) {
-                    return result;
-                }
-            });
-
-            let closestDown = findClosestNode(nodeToMeasure, (n, t, c) => {
-                let result;
-                if (n.x + n.width / 2 >= t.x && n.x + n.width / 2 <= t.x + t.width) {
-                    if (t.y > n.y + n.height) {
-                        result = { x: t.x, y: t.y, height: 0, width: t.width};
-                    }
-
-                    if (n.y + n.height > t.y && n.y + n.height < t.y + t.height) {
-                        result = { x: t.x, y: t.y + t.height, height: 0, width: t.width };
-                    }   
-
-                    if (n.y >= t.y && n.y + n.height <= t.y + t.height) {
-                        result = { x: t.x, y: t.y + t.height, height: 0, width: t.width };
-                    }
-                }
-
-                if (!c || (result && result.y < c.y)) {
-                    return result;
-                }
-            });
+            ctx.strokeRect(x, y, width, height);
 
             let drawLine = (text, x1, y1, x2, y2) => {
                 ctx.strokeStyle = line_color;
@@ -180,44 +74,75 @@ export default class RendererMeasurer extends Component {
                 ctx.fillText(text, centerX, centerY);
             };
 
-            if (closestLeft) {
-                let left_pos = getNodePosition(closestLeft, pan, zoom);
-                let left_size = getNodeSize(closestLeft, pan, zoom);
-                let x1 = left_pos.x;
-                let x2 = position.x;
-                let y1 = position.y + size.height / 2;
-                let y2 = position.y + size.height / 2;
-                drawLine(nodeToMeasure.attributes.x - closestLeft.attributes.x, x1, y1, x2, y2);
-            }
+            if (hierarchy.length > 0) {
+                let { x: px, y: py, width: pwidth, height: pheight } = getBoundingClientRect(hierarchy[0]);
 
-            if (closestRight) {
-                let right_pos = getNodePosition(closestRight, pan, zoom);
-                let right_size = getNodeSize(closestRight, pan, zoom);
-                let x1 = right_pos.x;
-                let x2 = position.x + size.width;
-                let y1 = position.y + size.height / 2;
-                let y2 = position.y + size.height / 2;
-                drawLine(closestRight.attributes.x - nodeToMeasure.attributes.x - nodeToMeasure.attributes.width, x1, y1, x2, y2);
-            }
+                let page_elements = Array.from(document.querySelector('[data-class="artboard"]').querySelectorAll('svg, [data-class="text"]'));
+                page_elements = page_elements.map(el => getBoundingClientRect(el));
 
-            if (closestUp) {
-                let up_pos = getNodePosition(closestUp, pan, zoom);
-                let up_size = getNodeSize(closestUp, pan, zoom);
-                let x1 = position.x + size.width / 2;
-                let x2 = position.x + size.width / 2;
-                let y1 = up_pos.y;
-                let y2 = position.y;
-                drawLine(nodeToMeasure.attributes.y - closestUp.attributes.y, x1, y1, x2, y2);
-            }
+                // c ==> to check
+                // p ==> parent
+                // _ ==> eleent
+                let closest_right = page_elements.filter(c => {
+                    return c.x >= x + width && c.y <= y + height && c.y + c.height >= y && c.x + c.width < px + pwidth; 
+                }).sort((a, b) => {
+                    return a.x - b.x;
+                })[0];
 
-            if (closestDown) {
-                let down_pos = getNodePosition(closestDown, pan, zoom);
-                let down_size = getNodeSize(closestDown, pan, zoom);
-                let x1 = position.x + size.width / 2;
-                let x2 = position.x + size.width / 2;
-                let y1 = down_pos.y;
-                let y2 = position.y + size.height;
-                drawLine(closestDown.attributes.y - nodeToMeasure.attributes.y - nodeToMeasure.attributes.height, x1, y1, x2, y2);
+                let closest_down = page_elements.filter(c => {
+                    return c.y >= y + height && c.x <= x + width && c.x + c.width >= x && c.y < py + pheight;
+                }).sort((a, b) => {
+                    return a.y - b.y;
+                })[0];
+
+                let closest_up = page_elements.filter(c => {
+                    return c.y + c.height <= y && c.x <= x + width && c.x + c.width >= x && c.y > py;
+                }).sort((a, b) => {
+                    return (b.y + b.height) - (a.y + a.height);
+                })[0];
+
+                let closest_left = page_elements.filter(c => {
+                    return c.x + c.width <= x && c.y <= y + height && c.y + c.height >= y && c.x > px;
+                }).sort((a, b) => {
+                    return (b.x + b.width) - (a.x + a.width);
+                })[0];
+
+
+
+                if (closest_up) {
+                    let above = Math.round((y - closest_up.y - closest_up.height) / zoom);
+                    drawLine(above, x + width / 2, y, x + width / 2, closest_up.y + closest_up.height);
+                } else {
+                    let above = Math.round((y - py) / zoom);
+                    drawLine(above, x + width / 2, y, x + width / 2, py);
+                }
+                
+
+                if (closest_right) {
+                    let rightside = Math.round((closest_right.x - x - width) / zoom);
+                    drawLine(rightside, x + width, y + height / 2, closest_right.x, y + height / 2);
+                } else {
+                    let rightside = Math.round((px + pwidth - x - width) / zoom);
+                    drawLine(rightside, x + width, y + height / 2, px + pwidth, y + height / 2);
+                }
+                
+                if (closest_left) {
+                    let leftside = Math.round((x - closest_left.x - closest_left.width) / zoom);
+                    drawLine(leftside, x, y + height / 2, closest_left.x + closest_left.width, y + height / 2);
+                } else {
+                    let leftside = Math.round((x - px) / zoom);
+                    drawLine(leftside, x, y + height / 2, px, y + height / 2);
+                }
+                
+
+                if (closest_down) {
+                    let below = Math.round((closest_down.y - y - height) / zoom);
+                    drawLine(below, x + width / 2, y + height, x + width / 2, closest_down.y);
+                } else {
+                    let below = Math.round((py + pheight - y - height) / zoom);
+                    drawLine(below, x + width / 2, y + height, x + width / 2, py + pheight);
+                }
+                
             }
 
         }

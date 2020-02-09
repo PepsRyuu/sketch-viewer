@@ -15,6 +15,28 @@ function talignToFlex (value) {
 }
 
 export default function TextElement (node) {
+    if (node.attributes.paragraphs) {
+        return (
+            <div>
+                {node.attributes.paragraphs.map(group => (
+                    <div style={{
+                        'position': 'absolute',
+                        'top': group.y + 'px',
+                        'left': group.x + 'px',
+                        'white-space': 'pre',
+                        'line-height': group.segments[0].style['line-height']
+                    }}>
+                        {group.segments.map(segment => (
+                            <span style={segment.style}>
+                                {segment.value}
+                            </span>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
     return (
         <div style={{
            'justify-content': talignToFlex(node.attributes.strings[0].attributes['text-align']),
@@ -22,9 +44,7 @@ export default function TextElement (node) {
            'display': 'flex',
            'align-items': valignToFlex(node.attributes.strings[0].attributes['vertical-align']),
         }}>
-            <div style={{
-                'text-align': node.attributes.strings[0].attributes['text-align']
-            }}>
+            <div>
             {node.attributes.strings.map(s => {
                 return (
                     <span style={{
